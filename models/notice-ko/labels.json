@@ -1,0 +1,1 @@
+{"kind": ["발생", "복구", "예정", "대비", "무관"], "cause": ["미상", "설비고장", "차량·외물", "기상", "화재", "과부하", "공사·작업", "산불", "침수"], "tags": ["O", "B-ONSET", "I-ONSET", "B-ETA", "I-ETA", "B-DUR", "I-DUR", "B-DONE", "I-DONE", "B-HH", "I-HH"], "base": "monologg/koelectra-small-v3-discriminator"}

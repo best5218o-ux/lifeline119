@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>라이프라인 119</title>
+<meta name="description" content="정전이 나면 의료기기 배터리가 먼저 끝날 집을 찾아 119 비상전원을 먼저 보냅니다">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo" aria-hidden="true"><svg viewBox="0 0 32 32" width="30" height="30"><rect x="1" y="1" width="30" height="30" rx="8" fill="#d7263d"/><path d="M5 17h6l2-5 4 10 3-7 2 2h5" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+    <div><b>라이프라인 119</b><small>정전 때 배터리가 먼저 끝날 집에 119가 먼저 갑니다</small></div></div>
+  <nav class="tabs" role="tablist" aria-label="화면">
+    <button class="tab on" data-view="ops" role="tab" aria-selected="true">🚒 119 상황실</button>
+    <button class="tab" data-view="home" role="tab" aria-selected="false">🏠 우리 집 등록</button>
+    <button class="tab" data-view="plan" role="tab" aria-selected="false">🗺️ 우리 동네 대비</button>
+    <button class="tab sm" data-view="about" role="tab" aria-selected="false">근거</button>
+  </nav>
+  <button class="demo-btn" id="demoBtn">▶ 30초 시연</button>
+  <div class="mode" id="aiMode" title="생성형 AI 연결 상태">AI 확인 중…</div>
+</header>
+
+<main>
+<!-- ===== 상황실 ===== -->
+<section id="v-ops" class="view on" aria-label="119 상황실">
+  <div class="opsbar">
+    <label class="case">사례 <select id="scSel">
+      <option value="S1">2022 송파 아파트 정전 (실제 재현)</option>
+      <option value="S5">2021 대전 남대전변전소 화재 (실제 재현)</option>
+      <option value="S3">2026 대전 탄방동 새벽 차량 충돌 (실제 재현)</option>
+      <option value="S2" selected>대전 서구 한파 광역 정전 (가상)</option>
+      <option value="S4">대전 서구 폭염 열대야 정전 (가상)</option>
+    </select></label>
+    <div class="steps" id="steps" aria-label="시간 흐름"></div>
+    <span class="synth">가구는 모두 합성 데이터</span>
+  </div>
+
+  <div class="status" id="status">
+    <div class="st-main">
+      <div class="st-clock"><b id="simTime">--:--</b><small id="simElapsed">정전 0분</small></div>
+      <div class="st-text"><p id="stLine" class="st-line">-</p><p id="stSub" class="st-sub"></p></div>
+    </div>
+    <form class="paste" id="pasteForm" autocomplete="off">
+      <label for="noticeIn" class="sr">재난문자나 한전 안내 붙여넣기</label>
+      <input id="noticeIn" placeholder="재난문자·한전 안내를 붙여넣으면 바로 반영합니다 (예: 내일 오전 9시 복구 예정)">
+      <button class="btn" type="submit">반영</button>
+    </form>
+  </div>
+
+  <div class="opsgrid">
+    <div class="queue" id="queue" aria-live="polite"></div>
+    <div class="mapcol">
+      <div class="mapwrap"><div id="map" role="img" aria-label="정전 지역 지도"></div>
+        <div class="legend"><span><i class="dot t0"></i>지금 가야 함</span><span><i class="dot t1"></i>곧 위험</span><span><i class="dot t2"></i>괜찮음</span><span><i class="sq"></i>119 발전기</span><span><i class="sq v"></i>대여업체</span></div>
+      </div>
+      <details class="replay-box" id="replayBox"><summary>실제 기록과 비교하기</summary><div class="replay" id="replay"></div></details>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 우리 집 ===== -->
+<section id="v-home" class="view" aria-label="우리 집 등록">
+  <div class="wizard" id="wizard"></div>
+</section>
+
+<!-- ===== 우리 동네 ===== -->
+<section id="v-plan" class="view" aria-label="우리 동네 대비">
+  <div class="plan-head card">
+    <div>
+      <p class="eyebrow">대전 서구 · 한파 기준 · 가구 속성은 합성</p>
+      <p class="big-q">정전이 <b id="durTxt">24시간</b> 이어지면</p>
+      <p class="big-a"><b id="needN">-</b>가구에 비상전원이나 이송이 필요합니다</p>
+      <p class="sub-a" id="needSub"></p>
+    </div>
+    <div class="slider">
+      <input type="range" id="durR" min="0" max="5" step="1" value="3" aria-label="정전 길이">
+      <div class="ticks"><span>3시간</span><span>6</span><span>12</span><span>24</span><span>48</span><span>72시간</span></div>
+    </div>
+  </div>
+  <div class="plangrid">
+    <div class="mapwrap"><div id="pmap" role="img" aria-label="행정동별 지도"></div>
+      <div class="legend" id="pLegend"></div>
+      <div class="layer-sel"><label>지도 <select id="pLayer">
+        <option value="exp">생명유지기기 가구(합성 집계)</option>
+        <option value="p80">80세 이상 인구</option>
+        <option value="hh1">1인 가구 비율</option>
+      </select></label></div>
+    </div>
+    <div class="side">
+      <div class="card"><div class="card-h">여름 전에 먼저 점검할 단지 <small>K-apt 실데이터</small></div><div id="oldApt" class="tbl"></div></div>
+      <details class="card"><summary class="card-h">한전 생명유지장치 할인 가구 추이 <small>실데이터</small></summary><canvas id="kepChart" height="170"></canvas><small class="muted">출처: 한전 전력데이터 개방포털 복지할인 시군구 월별</small></details>
+      <details class="card"><summary class="card-h">정전 길이별 필요 가구 그래프</summary><canvas id="needChart" height="170"></canvas></details>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 근거 ===== -->
+<section id="v-about" class="view"><div class="about" id="aboutBox"></div></section>
+</main>
+
+<div class="modal" id="modal" hidden><div class="mbox" role="dialog" aria-modal="true"><button class="x" id="mClose" aria-label="닫기">×</button><div id="mBody"></div></div></div>
+<div class="demo" id="demo" hidden><div class="demo-in"><span class="demo-n" id="demoN">1/5</span><p id="demoTxt"></p><div class="demo-c"><button class="btn ghost sm" id="demoStop">닫기</button><button class="btn sm" id="demoNext">다음 ▶</button></div><div class="demo-bar"><i id="demoBar"></i></div></div></div>
+<div id="printCard" class="print-only"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="engine.js"></script>
+<script src="notice_ai.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
