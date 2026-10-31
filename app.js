@@ -408,12 +408,12 @@ function initPlan() {
   mapPlan = L.map('pmap'); tiles(mapPlan); mapPlan.setView([36.33, 127.37], 12);
   const all = D.sc.ALL_DJ.households; const byDong = {}; all.forEach(h => { if (h.dong) byDong[h.dong] = (byDong[h.dong] || 0) + 1; });
   const feats = D.dongs.features.filter(f => f.properties.adm_cd.startsWith('25030'));
-  feats.forEach(f => { const p = f.properties; p.exp = byDong[p.adm_nm] || 0; p.p80 = p.pop80; p.hh1r = p.hh ? p.hh1 / p.hh : 0; });
+  feats.forEach(f => { const p = f.properties; p.exp = byDong[p.adm_nm] || 0; p.p80 = p.pop80; p.hh1r = p.hh ? p.hh1 / p.hh : 0; const w = (D.wel.dong || {})[p.adm_nm] || {}; p.alone = w.alone || 0; p.basic = w.basic || 0; });
   function draw() {
     const key = $('#pLayer').value; if (dongLayer) dongLayer.remove();
-    const val = p => key === 'exp' ? p.exp : key === 'p80' ? p.p80 : p.hh1r; const mx = Math.max(...feats.map(f => val(f.properties))) || 1;
-    dongLayer = L.geoJSON({ type: 'FeatureCollection', features: feats }, { style: f => ({ color: '#334155', weight: 1, fillColor: `rgba(200,30,51,${0.08 + 0.75 * val(f.properties) / mx})`, fillOpacity: 1 }), onEachFeature: (f, l) => { const p = f.properties; l.bindTooltip(`<b>${esc(p.adm_nm)}</b><br>생명유지기기 가구(합성 집계) ${p.exp}<br>80세 이상 ${p.pop80.toLocaleString()}명 · 1인가구 ${(p.hh1r * 100).toFixed(0)}% (SGIS 2024)`); } }).addTo(mapPlan);
-    $('#pLegend').innerHTML = { exp: '진할수록 생명유지기기 가구가 많음 — 한전 서구 131가구를 합성 배치한 집계(실제 분포 아님)', p80: '진할수록 80세 이상 인구 많음 (SGIS 2024)', hh1: '진할수록 1인 가구 비율 높음 (SGIS 2024)' }[key];
+    const val = p => key === 'exp' ? p.exp : key === 'p80' ? p.p80 : key === 'alone' ? p.alone : key === 'basic' ? p.basic : p.hh1r; const mx = Math.max(...feats.map(f => val(f.properties))) || 1;
+    dongLayer = L.geoJSON({ type: 'FeatureCollection', features: feats }, { style: f => ({ color: '#334155', weight: 1, fillColor: `rgba(200,30,51,${0.08 + 0.75 * val(f.properties) / mx})`, fillOpacity: 1 }), onEachFeature: (f, l) => { const p = f.properties; l.bindTooltip(`<b>${esc(p.adm_nm)}</b><br>생명유지기기 가구(합성 집계) ${p.exp}<br>80세 이상 ${p.pop80.toLocaleString()}명 · 1인가구 ${(p.hh1r * 100).toFixed(0)}% (SGIS 2024)<br>독거노인 ${p.alone.toLocaleString()}세대 · 기초생활수급 ${p.basic.toLocaleString()}가구 (서구 공개자료 2026)`); } }).addTo(mapPlan);
+    $('#pLegend').innerHTML = { exp: '진할수록 생명유지기기 가구가 많음 — 한전 서구 131가구를 합성 배치한 집계(실제 분포 아님)', p80: '진할수록 80세 이상 인구 많음 (SGIS 2024)', hh1: '진할수록 1인 가구 비율 높음 (SGIS 2024)', alone: '진할수록 독거노인 세대 많음 — 정전 때 수동 환기·이동을 도울 사람이 없을 가능성 (대전 서구 독거노인현황 2026-02, data.go.kr 15113285)', basic: '진할수록 기초생활수급 가구 많음 — 여분 배터리·발전기를 스스로 마련하기 어려울 가능성 (대전 서구 수급자 현황 2026-07-20, data.go.kr 15085345)' }[key];
   }
   $('#pLayer').onchange = draw; draw(); setTimeout(() => { mapPlan.invalidateSize(); mapPlan.fitBounds(dongLayer.getBounds(), { padding: [10, 10] }); }, 120);
   const S2 = all.map((h, i) => LL.batterySamples(h, 600, 300 + i, { cold: true }).total);
@@ -516,8 +516,8 @@ function initAbout() {
 /* ---------- 시작 ---------- */
 (async function () {
   const [sc, dongs, sites, kep, res] = await Promise.all([j('data/scenarios.json'), j('data/dongs.geojson'), j('data/sites_seogu.json'), j('data/kepco_lifesupport_monthly.json'), j('data/results.json')]);
-  const [gen, heat] = await Promise.all([j('data/powered_sites_daejeon.json').catch(() => ({ items: [] })), j('data/heat_shelters_seogu.json').catch(() => ({ items: [] }))]);
-  Object.assign(D, { gen, heat });
+  const [gen, heat, wel] = await Promise.all([j('data/powered_sites_daejeon.json').catch(() => ({ items: [] })), j('data/heat_shelters_seogu.json').catch(() => ({ items: [] })), j('data/welfare_seogu.json').catch(() => ({ dong: {} }))]);
+  Object.assign(D, { gen, heat, wel });
   Object.assign(D, { sc, dongs, sites, kep, res });
   // 실데이터 결합: 행안부 「승강기 중대한 고장 발생 내역」(data.go.kr 15048080, 2000-08~2026-07) → K-apt 단지(도로명주소·단지명 일치) → 합성 가구의 단지
   const ef = {}; sites.forEach(x => { const k = x['단지명']; if (k && x['승강기고장_결합'] !== '없음') ef[k] = Math.max(ef[k] || 0, x['승강기중대고장_2021이후'] || 0); });
