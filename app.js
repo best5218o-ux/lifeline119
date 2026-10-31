@@ -211,13 +211,22 @@ const nk = s => String(s || '').replace(/학교법인|건양교육재단|을지�
 function hospitalsNear(hh) {
   const V = Object.fromEntries(((D.part && D.part.hira_vent) || []).map(v => [nk(v.name), v.vent]));
   const L2 = (S.sc.destinations || []).map(d => ({ name: d.name.replace(/^학교법인\s*(건양교육재단|을지학원)\s*/, ''), km: LL.haversineKm(hh, d), vent: V[nk(d.name)] || Object.entries(V).find(([k]) => nk(d.name).includes(k) || k.includes(nk(d.name)))?.[1] || 0 })).sort((a, b) => a.km - b.km);
-  const out = L2.slice(0, 1), v = L2.find(x => x.vent > 0); if (v && v !== out[0]) out.push(v); return out;
+  const ER = ((D.live && D.live.er && D.live.er.items) || []).map(x => ({ ...x, k: nk(x.name) }));
+  L2.forEach(x => { const m = ER.find(y => y.k.includes(nk(x.name)) || nk(x.name).includes(y.k)); if (m) x.er = m; });
+  const out = L2.slice(0, 1), v = L2.find(x => x.vent > 0 || (x.er && x.er.vent === 'Y')); if (v && v !== out[0]) out.push(v); return out;
+}
+// 식약처 허가·회수 (API 실제 호출 결과)
+function regTxt(id) {
+  const r = (D.reg && D.reg.dev || {})[id]; if (!r) return '';
+  const ok = r.reg.filter(x => x.status === '유효'), rc = r.recall.filter(x => /승인/.test(x.state));
+  const d8 = s => s ? s.slice(0, 4) + '-' + s.slice(4, 6) : '';
+  return `식약처 허가 ${ok.length ? ok.map(x => x.no.replace(/\s*호$/, '')).join(', ') + ' (유효)' : r.reg.length ? '조회됨 · 유효 허가 없음' : '조회 결과 없음 — 모델 직접 확인'}` + (rc.length ? ` · 회수 보고 ${rc.length}건(최근 ${d8(rc[0].date)} ${rc[0].state}) → 제조사 조치 확인 필요` : ' · 회수 보고 없음');
 }
 function alternatives(a) {
   const used = new Set(Object.values(S.over).map(o => o.res).concat(S.P.plan.filter(p => p.res && p.task.id !== a.hh.id).map(p => p.res)));
   const all = S.sc.resources.map(r => ({ r, c: LL.compat(r, a.device), arr: LL.DISPATCH.dispatch_delay_h + LL.travelH(r, a.hh) })).sort((x, y) => x.arr - y.arr);
   const opts = all.filter(o => o.c.ok).slice(0, 5), bad = all.filter(o => !o.c.ok), places = poweredPlaces(a.hh), hosp = hospitalsNear(a.hh);
-  modal(`<h3>${esc(a.hh.label)} — 다른 방법 고르기</h3><p class="muted">배터리 최소 ${fmt(a.bat_p10)}. ${esc(LL.KIND_KO[a.device.kind])} ${LL.DEVICE_POWER[a.device.kind] ? LL.DEVICE_POWER[a.device.kind].w + 'W(가정)' : ''}에 맞는 자원만 가까운 순으로 보입니다.</p><div class="alt">${opts.map((o, k) => `<button class="btn ghost" data-k="${k}">${ICON(o.r.id)} ${esc(o.r.name)} <small>(${esc(o.c.how)})</small> · ${fmt(o.arr)} 뒤 도착 ${o.arr <= a.bat_p10 ? '— 배터리 전' : '— 배터리보다 늦음'}${used.has(o.r.id) ? ' <small>(다른 집 배정됨)</small>' : ''}</button>`).join('')}<button class="btn ghost" data-k="call">📞 전화 안내 + 🚑 구급 이송으로</button>${hosp.map(h => `<p class="muted" style="margin:4px 0">🚑 이송 후보: <b>${esc(h.name)}</b> ${h.km.toFixed(1)}km · ${h.vent ? `인공호흡기 ${h.vent}대 신고` : '인공호흡기 신고 내역 없음'} <small>(심평원 의료장비 2025-12)</small></p>`).join('')}${places.map((q, k) => `<button class="btn ghost" data-k="p${k}">🏛️ ${esc(q.name)} · ${q.km.toFixed(1)}km <small>(${esc(q.why)})</small></button>`).join('')}</div>${bad.length ? `<p class="muted">후보에서 뺀 자원 ${bad.length}곳: ${bad.slice(0, 6).map(o => esc(o.r.name.replace(/ 이동식발전기| 배터리 차량/, '')) + ' — ' + esc(o.c.why)).join(' · ')}</p>` : ''}`);
+  modal(`<h3>${esc(a.hh.label)} — 다른 방법 고르기</h3><p class="muted">배터리 최소 ${fmt(a.bat_p10)}. ${esc(LL.KIND_KO[a.device.kind])} ${LL.DEVICE_POWER[a.device.kind] ? LL.DEVICE_POWER[a.device.kind].w + 'W(가정)' : ''}에 맞는 자원만 가까운 순으로 보입니다.</p><div class="alt">${opts.map((o, k) => `<button class="btn ghost" data-k="${k}">${ICON(o.r.id)} ${esc(o.r.name)} <small>(${esc(o.c.how)})</small> · ${fmt(o.arr)} 뒤 도착 ${o.arr <= a.bat_p10 ? '— 배터리 전' : '— 배터리보다 늦음'}${used.has(o.r.id) ? ' <small>(다른 집 배정됨)</small>' : ''}</button>`).join('')}<button class="btn ghost" data-k="call">📞 전화 안내 + 🚑 구급 이송으로</button>${hosp.map(h => `<p class="muted" style="margin:4px 0">🚑 이송 후보: <b>${esc(h.name)}</b> ${h.km.toFixed(1)}km · ${h.vent ? `인공호흡기 ${h.vent}대 신고` : '인공호흡기 신고 내역 없음'} <small>(심평원 2025-12)</small>${h.er ? ` · <b>응급실 가용 ${h.er.ec}병상${h.er.vent === 'Y' ? ' · 인공호흡기 가용' : ''}</b> <small>(국립중앙의료원 실시간 ${h.er.t.slice(8, 10)}:${h.er.t.slice(10, 12)} 수신)</small>` : ''}</p>`).join('')}${places.map((q, k) => `<button class="btn ghost" data-k="p${k}">🏛️ ${esc(q.name)} · ${q.km.toFixed(1)}km <small>(${esc(q.why)})</small></button>`).join('')}</div>${bad.length ? `<p class="muted">후보에서 뺀 자원 ${bad.length}곳: ${bad.slice(0, 6).map(o => esc(o.r.name.replace(/ 이동식발전기| 배터리 차량/, '')) + ' — ' + esc(o.c.why)).join(' · ')}</p>` : ''}`);
   $$('#mBody [data-k]').forEach(b => b.onclick = () => { const k = b.dataset.k; if (k === 'call') { S.over[a.hh.id] = { lane: 'call' }; } else if (k[0] === 'p') { const q = places[+k.slice(1)]; S.over[a.hh.id] = { lane: 'site', site: q.name, why: q.why }; } else { const o = opts[+k]; S.over[a.hh.id] = { res: o.r.id, res_name: o.r.name, how: o.c.how, arr: o.arr, lane: 'manual', ok: o.arr <= a.bat_p10 }; } closeModal(); renderQueue(); drawMap(); });
 }
 async function showTexts(a) {
@@ -232,7 +241,7 @@ function detail(a) {
   <p>${esc(LL.KIND_KO[a.device.kind])} <b>${esc(a.device.model)}</b> · 여분 배터리 ${h.ext_count}개 · 배터리 ${h.battery_age_y}년 · 예비 산소통 ${h.o2_cyl_h || 0}시간분 · 기기 없이 ${({ A: '30분 미만', B: '30분~4시간', C: '4시간 초과' })[h.tier]} · ${h.floor}층</p>
   <table class="tbl"><tr><td>배터리 최소 (10번 중 9번은 이보다 오래)</td><td><b>${fmt(a.bat_p10)}</b></td></tr><tr><td>배터리 보통</td><td>${fmt(a.bat_p50)}</td></tr><tr><td>전기 복구 최대 (10번 중 9번은 이 안에)</td><td>${fmt(a.rest_p90)}</td></tr><tr><td>복구 전에 배터리가 끝날 확률</td><td>${(a.p_fail * 100).toFixed(0)}%</td></tr>${(() => { const p = assignOf(a); const t = Math.min(a.rest_p90, p && p.arr != null ? p.arr : Infinity); return `<tr><td>잔여대응여유 = 배터리 최소 − min(복구 최대, 자원 도착)<br><small class="muted">원안(전력안심망 AI) 판단식</small></td><td><b>${a.bat_p10 - t < 0 ? '−' + fmt(t - a.bat_p10) : fmt(a.bat_p10 - t)}</b>${p && p.res_name ? `<br><small>${esc(p.res_name)}${p.how ? ' · ' + esc(p.how) : ''}</small>` : ''}</td></tr>`; })()}</table>
   <p class="muted">${esc(a.flags.join(' · '))}</p>
-  <p class="muted">사양 근거: ${esc(a.device.src ? LL.SOURCES[a.device.src] : '사양 원문 미확인 → 0시간으로 보수 계산')}</p>`);
+  <p class="muted">사양 근거: ${esc(a.device.src ? LL.SOURCES[a.device.src] : '사양 원문 미확인 → 0시간으로 보수 계산')}</p>${regTxt(a.device.id) ? `<p class="muted">💊 ${esc(regTxt(a.device.id))}</p>` : ''}`);
 }
 function drawResources() {
   for (const r of S.sc.resources) L.marker([r.lat, r.lon], { icon: L.divIcon({ className: '', html: `<div style="width:12px;height:12px;background:${RCOL(r)};opacity:${r.avail === false ? .35 : 1};transform:rotate(45deg);border:2px solid #fff;box-shadow:0 0 2px #0008"></div>` }) }).bindTooltip(esc(r.name) + (r.avail === false ? ' — ' + esc(r.busy || '사용 중') : '') + '<br><small>' + esc(LL.resSpec(r).label) + ' · 출력 ' + LL.resSpec(r).w + 'W(가정)' + (LL.resSpec(r).wh ? ' · ' + LL.resSpec(r).wh + 'Wh' : '') + '<br>' + esc(r.note || '') + '</small>').addTo(layerOps);
@@ -379,7 +388,7 @@ function resultHTML() {
   if (d.kind === 'o2p' || d.kind === 'o2s') cand.push(['예비 산소통(4시간분)을 더 두면', { o2_cyl_h: hh.o2_cyl_h + 4 }]);
   if (hh.battery_age_y >= 4) cand.push(['배터리를 새것으로 바꾸면', { battery_age_y: 0.5 }]);
   let best = null; for (const [t, o] of cand) { const v = p10Of(hhObj(o)).p10; if (!best || v > best.v) best = { t, v }; }
-  return `<div class="result"><p class="muted">${esc(LL.KIND_KO[d.kind])} · ${esc(d.model)}</p>
+  return `<div class="result"><p class="muted">${esc(LL.KIND_KO[d.kind])} · ${esc(d.model)}${regTxt(d.id) ? '<br>💊 ' + esc(regTxt(d.id)) : ''}</p>
   ${zero ? `<p class="big">배터리를 확인하기 전이라<b>0분</b>으로 계산합니다</p>` : `<p class="big">정전이 나면 우리 집은 최소<b class="${pf < 10 ? 'okc' : ''}">${fmt(R.p10)}</b>버팁니다</p>`}
   <div class="cmp"><div class="lab"><span>우리 집 (최소)</span><span>${zero ? '0분' : fmt(R.p10)}</span></div><div class="bar"><i style="width:${w(zero ? 0 : R.p10)}%;background:#c81e33"></i></div>
   <div class="lab"><span>아파트 정전 10건 중 9건이 복구되는 시간</span><span>${fmt(P90)}</span></div><div class="bar"><i style="width:${w(P90)}%;background:#6b7280"></i></div></div>
@@ -441,7 +450,8 @@ function initPlan() {
   ((D.part && D.part.partners) || []).forEach(x => L.marker([x.lat, x.lon], { icon: L.divIcon({ className: '', html: `<div style="font-size:14px;line-height:14px">${PK[x.kind] || '•'}</div>` }) }).bindTooltip(`${esc(x.kind)} · <b>${esc(x.name)}</b>${x.tel ? '<br>' + esc(x.tel) : ''}<br><small>${esc(x.addr || '')}</small>`).addTo(mapPlan));
   (D.gen.items || []).filter(x => x.gu === '서구' || !x.gu).forEach(x => L.marker([x.lat, x.lon], { icon: L.divIcon({ className: '', html: '<div style="font-size:12px;line-height:12px;opacity:.85">🏛️</div>' }) }).bindTooltip(`${esc(x.name)} — 비상발전기 ${x.kw}kW (2020 기준)`).addTo(mapPlan));
   const cnt = k => ((D.part && D.part.partners) || []).filter(x => x.kind === k).length;
-  const pp = document.getElementById('partnerBox'); if (pp) pp.innerHTML = `<h4 style="margin:12px 0 4px">평시 점검·정전 때 연락할 서구 기관 (지도 표시)</h4><table><tr><th>기관</th><th>곳</th><th>정전 때 할 일</th></tr><tr><td>🩺 재택의료센터</td><td>${cnt('재택의료센터')}</td><td>등록 가구 배터리 점검 방문, 이송 판단 상담</td></tr><tr><td>🏥 보건소·지소</td><td>${cnt('보건소·지소')}</td><td>명부 대조, 충전 거점 후보</td></tr><tr><td>🤝 장애인 활동지원기관</td><td>${cnt('장애인 활동지원기관')}</td><td>현장 연락·계단 이동 지원</td></tr><tr><td>🏛️ 비상발전 공공시설</td><td>${(D.gen.items || []).filter(x => x.gu === '서구').length}</td><td>정전 중 대기·예비 배터리 충전 (협약 필요)</td></tr></table><p class="muted">재택의료센터 주소정보(건보공단 2026-09) · 지역보건의료기관(복지부 2025-12) · 서구 장애인 활동지원 기관(2026-03) · 공공기관 비상용발전기(한국전기안전공사 2020)</p>`;
+  const LV = D.live; const liveHTML = LV ? `<h4 style="margin:12px 0 4px">실시간 공공 API 연결 — ${esc(LV.fetched_at.replace('T', ' ').slice(0, 16))} 수신 스냅숏</h4><table><tr><th>API</th><th>받은 값</th><th>시제품에서 쓰는 곳</th></tr><tr><td>기상청 초단기실황</td><td>서구 ${LV.weather.dong_n}개 동 기온 ${LV.weather.t_min}~${LV.weather.t_max}℃</td><td>한파·폭염 가중을 실측 기온으로</td></tr><tr><td>국립중앙의료원 응급의료기관</td><td>대전 응급실 ${LV.er.items.length}곳 · 가용 ${LV.er.items.reduce((s, x) => s + x.ec, 0)}병상 · 인공호흡기 가용 ${LV.er.items.filter(x => x.vent === 'Y').length}곳</td><td>「다른 방법」 이송 후보</td></tr><tr><td>환경공단 전기차 충전기</td><td>서구 충전기 ${LV.ev.n.toLocaleString()}기 상태 수신 (충전소 ${LV.ev.stations.toLocaleString()}곳)</td><td>한 동네 충전기 상태가 동시에 바뀌면 정전 범위 보조 신호</td></tr><tr><td>식약처 품목·회수</td><td>인공호흡기 386·산소발생기 141 품목, 모델별 회수 보고</td><td>기기 등록 시 허가번호·회수 이력</td></tr></table><p class="muted">수집기: prep/fetch_live.py (공공데이터포털 인증키 1개, 자동승인 API). 정적 시연 페이지라 수집 시점 값을 보여 줍니다.</p>` : '';
+  const pp = document.getElementById('partnerBox'); if (pp) pp.innerHTML = liveHTML + `<h4 style="margin:12px 0 4px">평시 점검·정전 때 연락할 서구 기관 (지도 표시)</h4><table><tr><th>기관</th><th>곳</th><th>정전 때 할 일</th></tr><tr><td>🩺 재택의료센터</td><td>${cnt('재택의료센터')}</td><td>등록 가구 배터리 점검 방문, 이송 판단 상담</td></tr><tr><td>🏥 보건소·지소</td><td>${cnt('보건소·지소')}</td><td>명부 대조, 충전 거점 후보</td></tr><tr><td>🤝 장애인 활동지원기관</td><td>${cnt('장애인 활동지원기관')}</td><td>현장 연락·계단 이동 지원</td></tr><tr><td>🏛️ 비상발전 공공시설</td><td>${(D.gen.items || []).filter(x => x.gu === '서구').length}</td><td>정전 중 대기·예비 배터리 충전 (협약 필요)</td></tr></table><p class="muted">재택의료센터 주소정보(건보공단 2026-09) · 지역보건의료기관(복지부 2025-12) · 서구 장애인 활동지원 기관(2026-03) · 공공기관 비상용발전기(한국전기안전공사 2020)</p>`;
 }
 
 /* ================= 30초 시연 ================= */
@@ -528,8 +538,8 @@ function initAbout() {
 /* ---------- 시작 ---------- */
 (async function () {
   const [sc, dongs, sites, kep, res] = await Promise.all([j('data/scenarios.json'), j('data/dongs.geojson'), j('data/sites_seogu.json'), j('data/kepco_lifesupport_monthly.json'), j('data/results.json')]);
-  const [gen, heat, wel, part] = await Promise.all([j('data/powered_sites_daejeon.json').catch(() => ({ items: [] })), j('data/heat_shelters_seogu.json').catch(() => ({ items: [] })), j('data/welfare_seogu.json').catch(() => ({ dong: {} })), j('data/partners_seogu.json').catch(() => ({ partners: [], hira_vent: [] }))]);
-  Object.assign(D, { gen, heat, wel, part });
+  const [gen, heat, wel, part, reg, live] = await Promise.all([j('data/powered_sites_daejeon.json').catch(() => ({ items: [] })), j('data/heat_shelters_seogu.json').catch(() => ({ items: [] })), j('data/welfare_seogu.json').catch(() => ({ dong: {} })), j('data/partners_seogu.json').catch(() => ({ partners: [], hira_vent: [] })), j('data/device_registry.json').catch(() => ({ dev: {} })), j('data/live_summary.json').catch(() => null)]);
+  Object.assign(D, { gen, heat, wel, part, reg, live });
   Object.assign(D, { sc, dongs, sites, kep, res });
   // 실데이터 결합: 행안부 「승강기 중대한 고장 발생 내역」(data.go.kr 15048080, 2000-08~2026-07) → K-apt 단지(도로명주소·단지명 일치) → 합성 가구의 단지
   const ef = {}; sites.forEach(x => { const k = x['단지명']; if (k && x['승강기고장_결합'] !== '없음') ef[k] = Math.max(ef[k] || 0, x['승강기중대고장_2021이후'] || 0); });

@@ -43,13 +43,15 @@ const SOURCES = {
   welfare2026: '대전 서구 독거노인현황(data.go.kr 15113285, 2026-02) · 기초생활보장 수급자 현황(15085345, 2026-07-20) — 행정동 24곳 결합, 평시 대비 지도 층',
   partners2026: '서구 연계기관 — 재택의료센터 주소정보(건보공단 data.go.kr 15165686, 2026-09) 2곳 · 지역보건의료기관(복지부 3072692, 2025-12) 4곳 · 서구 장애인 활동지원 기관(15113115, 2026-03) 7곳',
   hira2025: '심평원 「의료장비 상세현황」(data.go.kr 15051055, 2025-12) — 대전 병원 인공호흡기 신고 65대(대청병원 15대 등), 이송 후보 표시에 사용(신고 기준이라 누락 있음)',
+  mfds2026: '식약처 의료기기 품목정보 API(data.go.kr 15073906)·회수·판매중지 API(15056785) 2026-10-31 실제 호출 — 사양 DB 모델의 국내 허가번호·유효 여부·회수 보고 이력 (Trilogy Evo 국내 모델코드 KR2110X15B 확인)',
+  live2026: '실시간 공공 API(2026-10-31 16:48 수신): 기상청 초단기실황(15084084) 서구 24개 동 · 국립중앙의료원 응급의료기관 실시간 병상(15000563) 대전 9곳 · 환경공단 전기차 충전기(15076352) 서구 4,150기',
   busan2023: '부산광역시 재난문자 발송현황 2023-05-19 남구 — 「3시간 가량」 → 「내일 오전 9시 복구 예정」으로 변경'
 };
 
 /* ---------- M1 기기 사양 DB ---------- */
 // internal_h/ext_h: 공칭(또는 벤치 실측) 시간. null = 원문 미확인 → 엔진은 0으로 두고 「확인 필요」를 띄운다(하한은 보수적으로).
 const DEVICE_DB = [
-  { id: 'trilogy_evo', kind: 'vent', maker: 'Philips', model: 'Trilogy Evo', aliases: ['TRILOGY EVO', 'TRILOGYEVO', 'DS2110X11B'], internal_h: 7.5, ext_h: 7.5, ext_max: 1, basis: 'spec', src: 'philipsEvo' },
+  { id: 'trilogy_evo', kind: 'vent', maker: 'Philips', model: 'Trilogy Evo', aliases: ['TRILOGY EVO', 'TRILOGYEVO', 'DS2110X11B', 'KR2110X15B', 'KR2200X15B'], internal_h: 7.5, ext_h: 7.5, ext_max: 1, basis: 'spec', src: 'philipsEvo' },
   { id: 'astral150', kind: 'vent', maker: 'ResMed', model: 'Astral 150', aliases: ['ASTRAL 150', 'ASTRAL150'], internal_h: 8, ext_h: 8, ext_max: 2, basis: 'spec', src: 'resmedAstral' },
   { id: 'trilogy100', kind: 'vent', maker: 'Philips', model: 'Trilogy 100', aliases: ['TRILOGY 100', 'TRILOGY100', 'TRILOGY 200'], internal_h: null, ext_h: 3, ext_max: 1, basis: 'spec-min', src: 'philipsT100' },
   { id: 'ltv1200', kind: 'vent', maker: 'CareFusion', model: 'LTV 1200', aliases: ['LTV 1200', 'LTV1200', 'LTV 1150'], internal_h: 1.8, ext_h: null, ext_max: 0, basis: 'bench', src: 'blakeman2011' },

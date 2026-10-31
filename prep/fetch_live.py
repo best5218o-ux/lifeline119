@@ -8,7 +8,7 @@
 모두 data.go.kr 「자동승인」 API다 (2026-10-31 원문 페이지 확인).
 2026-10-31 인증키 없이 호출해 「SERVICE_KEY_IS_NULL」(=경로 유효)을 확인한 경로: weather·ev·er·mfds·recall.
 msgs(긴급재난문자)는 상세 페이지에 요청주소가 공개돼 있지 않아 활용신청 뒤 명세의 주소를 MSGS_URL 환경변수로 넣는다.
-mfds·recall의 검색 파라미터 이름은 활용신청 뒤 명세로 한 번 더 확인한다.
+2026-10-31 실제 호출 확인: mfds는 PRDLST_NM(품목명)만 검색되고, recall은 type_name(모델명) 검색이 된다.
 
   weather   기상청 초단기실황 15084084        — 서구 행정동 격자 기온 → 한파·폭염 가중을 실측으로
   msgs      행안부 긴급재난문자 15134001        — 최근 문자 → M3 문자 해석 AI 입력
@@ -37,10 +37,21 @@ def latlon_to_grid(lat, lon):
     th *= sn
     return int(ra * math.sin(th) + XO + 0.5), int(ro - ra * math.cos(th) + YO + 0.5)
 
+import time, xml.etree.ElementTree as ET
 def get(url, params):
     q = urllib.parse.urlencode({'serviceKey': KEY, **params})
-    with urllib.request.urlopen(url + '?' + q, timeout=30) as r:
-        return json.loads(r.read().decode('utf-8'))
+    last = None
+    for i in range(6):  # 포털 연결이 자주 끊겨 재시도
+        try:
+            with urllib.request.urlopen(url + '?' + q, timeout=60) as r:
+                t = r.read().decode('utf-8')
+            if t.lstrip().startswith('<'):  # XML 응답(응급의료기관 등)은 item 목록으로 바꾼다
+                root = ET.fromstring(t)
+                return {'items': [{c.tag: c.text for c in it} for it in root.iter('item')], 'resultCode': (root.findtext('.//resultCode') or '')}
+            return json.loads(t)
+        except Exception as e:
+            last = e; time.sleep(3 + i * 2)
+    raise last
 
 def save(name, obj):
     obj = {'fetched_at': datetime.datetime.now(KST).isoformat(timespec='minutes'), **obj}
@@ -70,7 +81,7 @@ def msgs():
     save('msgs', {'src': '행정안전부 긴급재난문자 (data.go.kr 15134001)', 'raw': j})
 
 def ev():
-    j = get('https://apis.data.go.kr/B552584/EvCharger/getChargerInfo', {'pageNo': 1, 'numOfRows': 9999, 'dataType': 'JSON', 'zcode': '30', 'zscode': '30170'})
+    j = get('https://apis.data.go.kr/B552584/EvCharger/getChargerInfo', {'pageNo': 1, 'numOfRows': 9999, 'dataType': 'JSON', 'zcode': '30', 'zscode': '30170', 'kind': ''})
     save('ev', {'src': '한국환경공단 전기자동차 충전소 정보 (data.go.kr 15076352)', 'raw': j})
 
 def er():
@@ -78,13 +89,23 @@ def er():
     save('er', {'src': '국립중앙의료원 응급의료기관 정보 (data.go.kr 15000563)', 'raw': j})
 
 def mfds():
-    models = ['Trilogy', 'Astral', 'Inogen', 'LTV', 'HT50']
-    out = {m: get('https://apis.data.go.kr/1471000/MdeqPrdlstInfoService02/getMdeqPrdlstInfoInq02', {'type': 'json', 'pageNo': 1, 'numOfRows': 20, 'TYPE_NAME': m}) for m in models}
+    # 검색 파라미터는 품목명(PRDLST_NM)뿐이라 품목별로 전부 받아 모델명(TYPE_INFO)으로 거른다
+    out = {}
+    for pn in ['인공호흡기', '산소발생기', '흡인기', '기침유발기']:
+        items, p = [], 1
+        while True:
+            j = get('https://apis.data.go.kr/1471000/MdeqPrdlstInfoService02/getMdeqPrdlstInfoInq02', {'type': 'json', 'pageNo': p, 'numOfRows': 100, 'PRDLST_NM': pn})
+            its = [i.get('item', i) for i in j.get('body', {}).get('items', [])]
+            items += its
+            if not its or len(items) >= j['body']['totalCount'] or p >= 15: break
+            p += 1
+        out[pn] = items
     save('mfds', {'src': '식약처 의료기기 품목정보 (data.go.kr 15073906)', 'raw': out})
 
 def recall():
-    j = get('https://apis.data.go.kr/1471000/MdlpRtrvlSleStpgeInfoService04/getTypeNameList04', {'type': 'json', 'pageNo': 1, 'numOfRows': 100})
-    save('recall', {'src': '식약처 의료기기 회수·판매중지 (data.go.kr 15056785)', 'raw': j})
+    out = {m: get('https://apis.data.go.kr/1471000/MdlpRtrvlSleStpgeInfoService04/getTypeNameList04', {'type': 'json', 'pageNo': 1, 'numOfRows': 100, 'type_name': m})
+           for m in ['Astral', 'Trilogy', 'KR2110X15B', 'LTV', 'Inogen', 'HT50', 'Legendair', 'Stellar', 'EverFlo', 'SimplyGo']}
+    save('recall', {'src': '식약처 의료기기 회수·판매중지 (data.go.kr 15056785)', 'raw': out})
 
 if __name__ == '__main__':
     if not KEY:
