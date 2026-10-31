@@ -56,7 +56,7 @@ details>summary.card-h{cursor:pointer;margin:0}details[open]>summary.card-h{marg
 .legend{position:absolute;left:8px;bottom:8px;z-index:500;background:#fff;border-radius:8px;padding:5px 9px;display:flex;gap:9px;font-size:12px;box-shadow:0 1px 4px #0002;flex-wrap:wrap;max-width:94%}
 .legend .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px}
 .dot.t0{background:var(--red)}.dot.t1{background:#f59e0b}.dot.t2{background:var(--green)}
-.legend .sq{display:inline-block;width:9px;height:9px;background:var(--blue);margin-right:4px;vertical-align:-1px;transform:rotate(45deg)}.legend .sq.v{background:#7c3aed}
+.legend .sq{display:inline-block;width:9px;height:9px;background:var(--blue);margin-right:4px;vertical-align:-1px;transform:rotate(45deg)}.legend .sq.v{background:#7c3aed}.sq.e{background:#0f766e}
 .layer-sel{position:absolute;right:8px;top:8px;z-index:500;background:#fff;border-radius:8px;padding:5px 7px;box-shadow:0 1px 4px #0002;font-size:13px}
 .replay-box{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 14px}.replay-box summary{cursor:pointer;font-weight:700}
 .replay table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}

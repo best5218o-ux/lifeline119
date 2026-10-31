@@ -46,7 +46,7 @@
     </div>
     <form class="paste" id="pasteForm" autocomplete="off">
       <label for="noticeIn" class="sr">재난문자나 한전 안내 붙여넣기</label>
-      <input id="noticeIn" placeholder="재난문자·한전 안내를 붙여넣으면 바로 반영합니다 (예: 내일 오전 9시 복구 예정)">
+      <input id="noticeIn" placeholder="재난문자·한전 안내·주민 정전 신고를 붙여넣으면 바로 반영합니다 (예: 내일 오전 9시 복구 예정)">
       <button class="btn" type="submit">반영</button>
     </form>
   </div>
@@ -55,7 +55,7 @@
     <div class="queue" id="queue" aria-live="polite"></div>
     <div class="mapcol">
       <div class="mapwrap"><div id="map" role="img" aria-label="정전 지역 지도"></div>
-        <div class="legend"><span><i class="dot t0"></i>지금 가야 함</span><span><i class="dot t1"></i>곧 위험</span><span><i class="dot t2"></i>괜찮음</span><span><i class="sq"></i>119 발전기</span><span><i class="sq v"></i>대여업체</span></div>
+        <div class="legend"><span><i class="dot t0"></i>지금 가야 함</span><span><i class="dot t1"></i>곧 위험</span><span><i class="dot t2"></i>괜찮음</span><span><i class="sq"></i>119 발전기</span><span><i class="sq v"></i>대여업체</span><span><i class="sq e"></i>지자체 ESS</span></div>
       </div>
       <details class="replay-box" id="replayBox"><summary>실제 기록과 비교하기</summary><div class="replay" id="replay"></div></details>
     </div>

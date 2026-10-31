@@ -254,6 +254,25 @@ function assess(households, event, opt) {
 
 /* ---------- M5 배정 (마감시각 있는 차량경로 휴리스틱) ---------- */
 const DISPATCH = { road_factor: 1.4, speed_kmh: 30, service_h: 0.25, dispatch_delay_h: 0.1 }; // 가정
+/* 자원 호환·가용 — 원안(전력안심망 AI) 사전질의 답변: 「전압·출력·커넥터 등 기기 호환성, 잔량, 가용 여부와 이동시간을 우선 확인한 뒤 적합한 자원만 후보로」
+   기기 소비전력·자원 출력은 시제품 가정값(화면에 「가정」 표시) — 운영 시 검증 사양 DB·자원대장 값으로 바꾼다 */
+const DEVICE_POWER = { vent: { w: 100, in: 'AC220' }, o2p: { w: 120, in: 'AC220' }, o2s: { w: 350, in: 'AC220' }, cough: { w: 250, in: 'AC220' }, suction: { w: 100, in: 'AC220' } };
+const RES_SPEC = {
+  '119': { label: '이동식발전기', out: ['AC220'], w: 2000 },
+  rental: { label: '기종 전용 외장배터리 + 300W 파워뱅크', out: ['AC220'], w: 300, packs: ['trilogy_evo', 'astral150', 'trilogy100', 'inogen_g5'] },
+  ess: { label: '이동형 ESS', out: ['AC220'], w: 1000, wh: 1500 }
+};
+function resSpec(r) { return Object.assign({}, RES_SPEC[r.kind] || RES_SPEC['119'], r.spec || {}); }
+function compat(r, dev) {
+  if (r.avail === false) return { ok: false, why: r.busy || '사용 중' };
+  if (!dev) return { ok: true, how: '' };
+  const sp = resSpec(r), need = DEVICE_POWER[dev.kind] || { w: 350, in: 'AC220' };
+  if (sp.packs && sp.packs.includes(dev.id)) return { ok: true, how: '전용 외장배터리' };
+  if (!sp.out.includes(need.in)) return { ok: false, why: '전압·커넥터 불일치' };
+  if (need.w > sp.w) return { ok: false, why: `출력 부족 ${sp.w}W 〈 ${need.w}W` };
+  if (sp.wh) { const soc = r.soc == null ? 1 : r.soc, h = sp.wh * soc * 0.85 / need.w; if (h < 1) return { ok: false, why: '잔량 부족' }; return { ok: true, how: `AC ${sp.w}W · 잔량으로 약 ${h.toFixed(0)}시간` }; }
+  return { ok: true, how: `AC ${sp.w}W` };
+}
 function travelH(a, b) { return haversineKm(a, b) * DISPATCH.road_factor / DISPATCH.speed_kmh; }
 /* tasks: [{id, lat, lon, deadline_h}] , resources: [{id, name, lat, lon, kind, cap}] */
 function planDispatch(tasks, resources, policy) {
@@ -267,7 +286,7 @@ function planDispatch(tasks, resources, policy) {
   for (const k of T) {
     let best = null, bestAny = null;
     for (const r of R) {
-      if (r.left <= 0) continue;
+      if (r.left <= 0 || !compat(r, k.dev).ok) continue;
       const arr = r.t + travelH(r.at, k);
       if (!bestAny || arr < bestAny.arr) bestAny = { r, arr };
       if (arr <= k.deadline_h && (!best || arr < best.arr)) best = { r, arr };
@@ -277,14 +296,14 @@ function planDispatch(tasks, resources, policy) {
     const pick = policy === 'edf' ? best : bestAny;
     if (!pick) { plan.push({ task: k, res: null, arr: null, ok: false, lane: 'none' }); continue; }
     const r = pick.r; r.left--; r.t = pick.arr + DISPATCH.service_h; r.at = { lat: k.lat, lon: k.lon }; r.route.push(k.id);
-    plan.push({ task: k, res: r.id, res_name: r.name, arr: pick.arr, ok: pick.arr <= k.deadline_h, lane: 'power' });
+    plan.push({ task: k, res: r.id, res_name: r.name, how: compat(r, k.dev).how, arr: pick.arr, ok: pick.arr <= k.deadline_h, lane: 'power' });
   }
   if (policy === 'edf') {
     // 2차: 남은 자원을 기한 넘긴 집에 가장 빨리 닿는 순으로 보낸다 (늦더라도 간다 — 실제 소진시각은 하한보다 늦을 수 있다)
     for (const p of plan.filter(q => q.lane === 'call').sort((a, b) => a.task.deadline_h - b.task.deadline_h)) {
-      let b = null; for (const r of R) { if (r.left <= 0) continue; const arr = r.t + travelH(r.at, p.task); if (!b || arr < b.arr) b = { r, arr }; }
+      let b = null; for (const r of R) { if (r.left <= 0 || !compat(r, p.task.dev).ok) continue; const arr = r.t + travelH(r.at, p.task); if (!b || arr < b.arr) b = { r, arr }; }
       if (!b) continue; const r = b.r; r.left--; r.t = b.arr + DISPATCH.service_h; r.at = { lat: p.task.lat, lon: p.task.lon }; r.route.push(p.task.id);
-      Object.assign(p, { res: r.id, res_name: r.name, arr: b.arr, ok: false, lane: 'late' });
+      Object.assign(p, { res: r.id, res_name: r.name, how: compat(r, p.task.dev).how, arr: b.arr, ok: false, lane: 'late' });
     }
     improveSwap(plan, resources);
   }
@@ -296,9 +315,10 @@ function improveSwap(plan, resources) {
   for (let it = 0; it < 3; it++) for (const a of plan) if (!a.ok && a.res) for (const b of plan) {
     if (!b.ok || !b.res || a === b) continue;
     const ra = byId[a.res], rb = byId[b.res]; if ((ra.cap || 1) > 1 || (rb.cap || 1) > 1) continue; // 단일 출동 자원끼리만
+    if (!compat(rb, a.task.dev).ok || !compat(ra, b.task.dev).ok) continue; // 바꿔도 호환돼야 한다
     const aNew = DISPATCH.dispatch_delay_h + travelH(rb, a.task), bNew = DISPATCH.dispatch_delay_h + travelH(ra, b.task);
     if (aNew <= a.task.deadline_h && bNew <= b.task.deadline_h) {
-      [a.res, b.res] = [b.res, a.res]; [a.res_name, b.res_name] = [b.res_name, a.res_name]; a.arr = aNew; b.arr = bNew; a.ok = true; b.ok = true; break;
+      [a.res, b.res] = [b.res, a.res]; [a.res_name, b.res_name] = [b.res_name, a.res_name]; a.how = compat(rb, a.task.dev).how; b.how = compat(ra, b.task.dev).how; a.arr = aNew; b.arr = bNew; a.ok = true; b.ok = true; break;
     }
   }
 }
@@ -317,6 +337,6 @@ function templateHousehold(a) {
   return lines.join('\n');
 }
 
-const API = { rng, normal, quantile, probit, SOURCES, DEVICE_DB, KIND_KO, matchDevice, BATTERY_PRIOR, batterySamples, REST_PRIOR, REST_PRIOR_GRID, priorFor, ETA_NOISE, restorationSamples, parseNotice, fromAI, parsePoint, parseDur, scopeOf, assess, haversineKm, DISPATCH, travelH, planDispatch, fmtH, templateOrder, templateHousehold, fitRestorationPrior };
+const API = { rng, normal, quantile, probit, SOURCES, DEVICE_DB, KIND_KO, matchDevice, BATTERY_PRIOR, batterySamples, REST_PRIOR, REST_PRIOR_GRID, priorFor, ETA_NOISE, restorationSamples, parseNotice, fromAI, parsePoint, parseDur, scopeOf, assess, haversineKm, DISPATCH, travelH, planDispatch, compat, resSpec, RES_SPEC, DEVICE_POWER, fmtH, templateOrder, templateHousehold, fitRestorationPrior };
 if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.LL = API;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

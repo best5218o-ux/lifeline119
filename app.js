@@ -128,7 +128,7 @@ async function runStep() {
   if (AI.live && last) { const r = await ai('parse_notice', { text: last.n.text, sent_at: last.n.at }); if (r && r.result) { const same = r.result.kind === last.p.kind && (r.result.cause || null) === (last.p.cause || null); $('#stSub').insertAdjacentHTML('beforeend', ` · AI 교차확인(${esc(AI.provider)}): ${same ? '같은 해석' : '해석 다름 — 사람 확인'}`); } }
 }
 function computePlan() {
-  const tasks = S.A.list.filter(a => a.tier !== '관찰').map(a => ({ id: a.hh.id, lat: a.hh.lat, lon: a.hh.lon, deadline_h: Math.max(0, a.bat_p10), reg_order: a.hh.reg_order }));
+  const tasks = S.A.list.filter(a => a.tier !== '관찰').map(a => ({ id: a.hh.id, lat: a.hh.lat, lon: a.hh.lon, deadline_h: Math.max(0, a.bat_p10), reg_order: a.hh.reg_order, dev: a.device }));
   S.P = LL.planDispatch(tasks, S.sc.resources, 'edf'); S.Pr = LL.planDispatch(tasks, S.sc.resources, 'registry'); S.nTask = tasks.length;
   S.byHH = Object.fromEntries(S.P.plan.map(p => [p.task.id, p]));
 }
@@ -142,7 +142,7 @@ function renderStatus(ev, last, count) {
   if (last) { const p = last.p; const who = p.ai ? '<b class="aitag">AI가 읽음</b>' : '규칙으로 읽음';
     sub += `${who} 「${p.ai ? highlight(last.n.text, p.ai.spans) : esc(last.n.text.length > 60 ? last.n.text.slice(0, 60) + '…' : last.n.text)}」 → ${p.cause ? '원인 ' + p.cause : '원인 미상'}${p.eta_h != null ? ' · 복구 예정 ' + fmt(p.eta_h) + ' 뒤' : ''}${p.fill ? ' (' + p.fill + ')' : ''}${p.disagree ? ' <b>· AI와 규칙이 달라 확인 필요</b>' : ''}`; }
   else sub += '아직 안내문이 없어 기록으로 복구시간을 잡았습니다';
-  sub += ` · 기준 분포: ${pr === LL.REST_PRIOR ? '아파트 정전 382건(단지 내부·모를 때)' : '전국 재난문자 정전 실측 36건(지역 정전)'}`;
+  sub += ` · 복구시간 기준: ${pr === LL.REST_PRIOR ? '아파트 정전 382건(단지 내부·모를 때)' : '전국 재난문자 정전 실측 36건(지역 정전)'} 분포 — 한전 실시간 예측값 아님`;
   if (S.nTask) {
     // 복구 전 배터리가 끝날 것으로 보이는 집(기대치) = Σ P(배터리 < 복구), 배터리 최소 안에 도착한 집은 뺀다
     const pf = Object.fromEntries(S.A.list.map(a => [a.hh.id, a.p_fail]));
@@ -155,13 +155,15 @@ function renderStatus(ev, last, count) {
 }
 const SHORT = f => f.startsWith('배터리 사양') ? ['사양 미확인 → 0으로 계산', 1] : f.startsWith('배터리 상태') ? ['배터리 점검 기록 없음 → 0으로 계산', 1] : f.startsWith('장기') ? ['장기 정전(단지 설비)', 1] : f.startsWith('독거') ? ['혼자 계심', 1] : f === '24시간 상시 사용' ? ['24시간 사용', 0] : f === '기관절개' ? ['기관절개', 0] : /층 —/.test(f) ? [f.split(' —')[0] + ' (승강기)', 0] : null;
 function chips(a) { return a.flags.map(SHORT).filter(Boolean).slice(0, 3).map(([t, w]) => `<span class="chip${w ? ' w' : ''}">${esc(t)}</span>`).join(''); }
+const RCOL = r => r.kind === '119' ? '#1d4ed8' : r.kind === 'ess' ? '#0f766e' : '#7c3aed';
+const ICON = id => { const r = (S.sc.resources || []).find(x => x.id === id); return !r || r.kind === '119' ? '🚒' : r.kind === 'ess' ? '🔌' : '🔋'; };
 function leftTxt(a) { return a.bat_p10 <= 0.02 ? '배터리 이미 끝났을 수 있음' : `배터리 최소 ${fmt(a.bat_p10)}`; }
 function recTxt(a) {
   const g = G[a.tier]; if (g === 2) return '📱 문자로 상황만 안내';
   const p = assignOf(a);
-  if (p && p.res_name && (p.lane === 'power' || p.lane === 'manual')) return `🚒 <b>${esc(p.res_name)}</b> 발전기 · <b>${fmt(p.arr)}</b> 뒤 도착`;
-  if (p && p.res_name && p.lane === 'late') return `📞 먼저 전화로 수동 환기·예비 산소 안내 → 🚒 <b>${esc(p.res_name)}</b> ${fmt(p.arr)} 뒤 (배터리보다 늦음)`;
-  return '📞 전화로 수동 환기·예비 산소 안내 → 🚑 구급 이송 판단 (남는 발전기 없음)';
+  if (p && p.res_name && (p.lane === 'power' || p.lane === 'manual')) return `${ICON(p.res)} <b>${esc(p.res_name)}</b>${p.how ? ' <small>(' + esc(p.how) + ')</small>' : ''} · <b>${fmt(p.arr)}</b> 뒤 도착`;
+  if (p && p.res_name && p.lane === 'late') return `📞 먼저 전화로 수동 환기·예비 산소 안내 → ${ICON(p.res)} <b>${esc(p.res_name)}</b> ${fmt(p.arr)} 뒤 (배터리보다 늦음)`;
+  return '📞 전화로 수동 환기·예비 산소 안내 → 🚑 구급 이송 판단 (기한 안에 닿는 호환 자원 없음)';
 }
 function rowHTML(a, i) {
   const id = a.hh.id, g = G[a.tier], p = assignOf(a), done = S.approved[id];
@@ -196,9 +198,10 @@ function sendAll(list) {
 function callGuide(a) { S.approved[a.hh.id] = '전화 안내 완료 · 이송 판단 대기'; renderQueue(); showTexts(a); }
 function alternatives(a) {
   const used = new Set(Object.values(S.over).map(o => o.res).concat(S.P.plan.filter(p => p.res && p.task.id !== a.hh.id).map(p => p.res)));
-  const opts = S.sc.resources.map(r => ({ r, arr: LL.DISPATCH.dispatch_delay_h + LL.travelH(r, a.hh) })).sort((x, y) => x.arr - y.arr).slice(0, 5);
-  modal(`<h3>${esc(a.hh.label)} — 다른 방법 고르기</h3><p class="muted">배터리 최소 ${fmt(a.bat_p10)}. 지금 비어 있는 자원은 가까운 순으로 보입니다.</p><div class="alt">${opts.map((o, k) => `<button class="btn ghost" data-k="${k}">${o.r.kind === '119' ? '🚒' : '🔋'} ${esc(o.r.name)} · ${fmt(o.arr)} 뒤 도착 ${o.arr <= a.bat_p10 ? '— 배터리 전' : '— 배터리보다 늦음'}${used.has(o.r.id) ? ' <small>(다른 집 배정됨)</small>' : ''}</button>`).join('')}<button class="btn ghost" data-k="call">📞 전화 안내 + 🚑 구급 이송으로</button></div>`);
-  $$('#mBody [data-k]').forEach(b => b.onclick = () => { const k = b.dataset.k; if (k === 'call') { S.over[a.hh.id] = { lane: 'call' }; } else { const o = opts[+k]; S.over[a.hh.id] = { res: o.r.id, res_name: o.r.name, arr: o.arr, lane: 'manual', ok: o.arr <= a.bat_p10 }; } closeModal(); renderQueue(); drawMap(); });
+  const all = S.sc.resources.map(r => ({ r, c: LL.compat(r, a.device), arr: LL.DISPATCH.dispatch_delay_h + LL.travelH(r, a.hh) })).sort((x, y) => x.arr - y.arr);
+  const opts = all.filter(o => o.c.ok).slice(0, 5), bad = all.filter(o => !o.c.ok);
+  modal(`<h3>${esc(a.hh.label)} — 다른 방법 고르기</h3><p class="muted">배터리 최소 ${fmt(a.bat_p10)}. ${esc(LL.KIND_KO[a.device.kind])} ${LL.DEVICE_POWER[a.device.kind] ? LL.DEVICE_POWER[a.device.kind].w + 'W(가정)' : ''}에 맞는 자원만 가까운 순으로 보입니다.</p><div class="alt">${opts.map((o, k) => `<button class="btn ghost" data-k="${k}">${ICON(o.r.id)} ${esc(o.r.name)} <small>(${esc(o.c.how)})</small> · ${fmt(o.arr)} 뒤 도착 ${o.arr <= a.bat_p10 ? '— 배터리 전' : '— 배터리보다 늦음'}${used.has(o.r.id) ? ' <small>(다른 집 배정됨)</small>' : ''}</button>`).join('')}<button class="btn ghost" data-k="call">📞 전화 안내 + 🚑 구급 이송으로</button></div>${bad.length ? `<p class="muted">후보에서 뺀 자원 ${bad.length}곳: ${bad.slice(0, 6).map(o => esc(o.r.name.replace(/ 이동식발전기| 배터리 차량/, '')) + ' — ' + esc(o.c.why)).join(' · ')}</p>` : ''}`);
+  $$('#mBody [data-k]').forEach(b => b.onclick = () => { const k = b.dataset.k; if (k === 'call') { S.over[a.hh.id] = { lane: 'call' }; } else { const o = opts[+k]; S.over[a.hh.id] = { res: o.r.id, res_name: o.r.name, how: o.c.how, arr: o.arr, lane: 'manual', ok: o.arr <= a.bat_p10 }; } closeModal(); renderQueue(); drawMap(); });
 }
 async function showTexts(a) {
   const p = assignOf(a); let order = LL.templateOrder(a, p), msg = LL.templateHousehold(a), src = '규칙 문안';
@@ -210,12 +213,12 @@ function detail(a) {
   const h = a.hh; mapOps.setView([h.lat, h.lon], 16);
   modal(`<h3>${esc(h.label)} <small class="muted">합성 가구</small></h3>
   <p>${esc(LL.KIND_KO[a.device.kind])} <b>${esc(a.device.model)}</b> · 여분 배터리 ${h.ext_count}개 · 배터리 ${h.battery_age_y}년 · 예비 산소통 ${h.o2_cyl_h || 0}시간분 · 기기 없이 ${({ A: '30분 미만', B: '30분~4시간', C: '4시간 초과' })[h.tier]} · ${h.floor}층</p>
-  <table class="tbl"><tr><td>배터리 최소 (10번 중 9번은 이보다 오래)</td><td><b>${fmt(a.bat_p10)}</b></td></tr><tr><td>배터리 보통</td><td>${fmt(a.bat_p50)}</td></tr><tr><td>전기 복구 최대 (10번 중 9번은 이 안에)</td><td>${fmt(a.rest_p90)}</td></tr><tr><td>복구 전에 배터리가 끝날 확률</td><td>${(a.p_fail * 100).toFixed(0)}%</td></tr></table>
+  <table class="tbl"><tr><td>배터리 최소 (10번 중 9번은 이보다 오래)</td><td><b>${fmt(a.bat_p10)}</b></td></tr><tr><td>배터리 보통</td><td>${fmt(a.bat_p50)}</td></tr><tr><td>전기 복구 최대 (10번 중 9번은 이 안에)</td><td>${fmt(a.rest_p90)}</td></tr><tr><td>복구 전에 배터리가 끝날 확률</td><td>${(a.p_fail * 100).toFixed(0)}%</td></tr>${(() => { const p = assignOf(a); const t = Math.min(a.rest_p90, p && p.arr != null ? p.arr : Infinity); return `<tr><td>잔여대응여유 = 배터리 최소 − min(복구 최대, 자원 도착)<br><small class="muted">원안(전력안심망 AI) 판단식</small></td><td><b>${a.bat_p10 - t < 0 ? '−' + fmt(t - a.bat_p10) : fmt(a.bat_p10 - t)}</b>${p && p.res_name ? `<br><small>${esc(p.res_name)}${p.how ? ' · ' + esc(p.how) : ''}</small>` : ''}</td></tr>`; })()}</table>
   <p class="muted">${esc(a.flags.join(' · '))}</p>
   <p class="muted">사양 근거: ${esc(a.device.src ? LL.SOURCES[a.device.src] : '사양 원문 미확인 → 0시간으로 보수 계산')}</p>`);
 }
 function drawResources() {
-  for (const r of S.sc.resources) L.marker([r.lat, r.lon], { icon: L.divIcon({ className: '', html: `<div style="width:12px;height:12px;background:${r.kind === '119' ? '#1d4ed8' : '#7c3aed'};transform:rotate(45deg);border:2px solid #fff;box-shadow:0 0 2px #0008"></div>` }) }).bindTooltip(esc(r.name) + '<br><small>' + esc(r.note || '') + '</small>').addTo(layerOps);
+  for (const r of S.sc.resources) L.marker([r.lat, r.lon], { icon: L.divIcon({ className: '', html: `<div style="width:12px;height:12px;background:${RCOL(r)};opacity:${r.avail === false ? .35 : 1};transform:rotate(45deg);border:2px solid #fff;box-shadow:0 0 2px #0008"></div>` }) }).bindTooltip(esc(r.name) + (r.avail === false ? ' — ' + esc(r.busy || '사용 중') : '') + '<br><small>' + esc(LL.resSpec(r).label) + ' · 출력 ' + LL.resSpec(r).w + 'W(가정)' + (LL.resSpec(r).wh ? ' · ' + LL.resSpec(r).wh + 'Wh' : '') + '<br>' + esc(r.note || '') + '</small>').addTo(layerOps);
   if (S.sc.accident && S.sc.accident.lat) L.marker([S.sc.accident.lat, S.sc.accident.lon], { icon: L.divIcon({ className: '', html: '<div style="font-size:22px;line-height:22px">⚡</div>' }) }).bindTooltip(esc(S.sc.accident.label)).addTo(layerOps);
   if (S.sc.site) L.circle([S.sc.site.lat, S.sc.site.lon], { radius: 450, color: '#0f1b2d', weight: 1, fillOpacity: .05 }).bindTooltip(`${esc(S.sc.site.name)} ${S.sc.site.units}세대 (K-apt)`).addTo(layerOps);
 }
@@ -223,7 +226,7 @@ function drawMap() {
   layerOps.clearLayers(); routeLayer.clearLayers(); drawResources();
   for (const a of S.A.list) L.circleMarker([a.hh.lat, a.hh.lon], { radius: a.tier === '위급' ? 8 : 6, color: '#fff', weight: 1.5, fillColor: TCOL[a.tier], fillOpacity: .95 }).bindTooltip(`${esc(a.hh.label)} · ${leftTxt(a)}`).on('click', () => { const el = $('#row-' + CSS.escape(a.hh.id)); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 2600); } }).addTo(layerOps);
   const rb = Object.fromEntries(S.sc.resources.map(r => [r.id, r]));
-  for (const a of S.A.list) { const p = assignOf(a); if (!p || !p.res) continue; const r = rb[p.res]; if (!r) continue; const ok = !!S.approved[a.hh.id]; L.polyline([[r.lat, r.lon], [a.hh.lat, a.hh.lon]], { color: r.kind === '119' ? '#1d4ed8' : '#7c3aed', weight: ok ? 4 : 2, opacity: ok ? .95 : .55, dashArray: ok ? null : '6 6' }).addTo(routeLayer); }
+  for (const a of S.A.list) { const p = assignOf(a); if (!p || !p.res) continue; const r = rb[p.res]; if (!r) continue; const ok = !!S.approved[a.hh.id]; L.polyline([[r.lat, r.lon], [a.hh.lat, a.hh.lon]], { color: RCOL(r), weight: ok ? 4 : 2, opacity: ok ? .95 : .55, dashArray: ok ? null : '6 6' }).addTo(routeLayer); }
 }
 
 /* ----- 실제 기록과 비교 ----- */
@@ -232,7 +235,7 @@ function renderReplay() {
   const sc = S.sc, rows = sc.timeline_real ? sc.timeline_real.map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td></tr>`).join('') : '';
   if (S.key === 'S1') {
     const A = LL.assess(sc.households, { elapsed_h: 0, cold: true, cause: '기자재' }, { n: 800 });
-    const P = LL.planDispatch(A.list.filter(a => a.tier !== '관찰').map(a => ({ id: a.hh.id, lat: a.hh.lat, lon: a.hh.lon, deadline_h: Math.max(0, a.bat_p10) })), sc.resources, 'edf');
+    const P = LL.planDispatch(A.list.filter(a => a.tier !== '관찰').map(a => ({ id: a.hh.id, lat: a.hh.lat, lon: a.hh.lon, deadline_h: Math.max(0, a.bat_p10), dev: a.device })), sc.resources, 'edf');
     const first = Math.min(...P.plan.filter(p => p.arr != null).map(p => p.arr));
     $('#replay').innerHTML = `<table><tr><th style="width:20%">시각</th><th>실제 (보도)</th><th>라이프라인 119가 있었다면 (모의)</th></tr>
     <tr><td>20:01</td><td>변압기 파손, 약 5,500세대 정전</td><td>정전 범위 안 등록 가구 ${A.list.length}곳 바로 확인 · 한파 반영 · 전기 복구 최대 ${fmt(A.rest.p90)}</td></tr>
@@ -263,7 +266,7 @@ function renderReplay() {
   }
   if (S.key === 'S3') {
     const p = LL.parseNotice(sc.notices[0].text, sc.notices[0].at); const a = LL.assess(sc.households, { elapsed_h: 8 / 60, cause: p.cause }, { n: 2000 }).list[0];
-    const q = LL.planDispatch([{ id: a.hh.id, lat: a.hh.lat, lon: a.hh.lon, deadline_h: Math.max(0, a.bat_p10) }], sc.resources, 'edf').plan[0];
+    const q = LL.planDispatch([{ id: a.hh.id, lat: a.hh.lat, lon: a.hh.lon, deadline_h: Math.max(0, a.bat_p10), dev: a.device }], sc.resources, 'edf').plan[0];
     $('#replay').innerHTML = `<table><tr><th style="width:20%">실제 (보도)</th><th></th></tr>${rows}</table>
     <table><tr><th style="width:20%">모의</th><th></th></tr>
     <tr><td>04:30 신고</td><td>신고 문장 「개폐기 들이받음·신호등 꺼짐」을 정전으로 읽음(원인 ${esc(p.cause)}) → 주변 등록 가구 조회. 이런 소규모 돌발 정전에는 재난문자가 나가지 않는다</td></tr>
