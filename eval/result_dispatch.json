@@ -1,0 +1,44 @@
+{
+ "S2_notice1": {
+  "tasks": 25,
+  "resources": 16,
+  "at_risk_no_action": 27.74,
+  "remain_edf": 15.426666666666666,
+  "remain_registry": 16.903333333333332,
+  "remain_nearest": 17.41,
+  "call_lane": 7,
+  "plan_ok": {
+   "edf": 18,
+   "registry": 17,
+   "nearest": 16
+  }
+ },
+ "S2_notice2": {
+  "tasks": 72,
+  "resources": 16,
+  "at_risk_no_action": 35.61666666666667,
+  "remain_edf": 25.18,
+  "remain_registry": 28.963333333333335,
+  "remain_nearest": 29.113333333333333,
+  "call_lane": 51,
+  "plan_ok": {
+   "edf": 21,
+   "registry": 14,
+   "nearest": 19
+  }
+ },
+ "S1_t0": {
+  "tasks": 3,
+  "resources": 6,
+  "at_risk_no_action": 2.31,
+  "remain_edf": 0.84,
+  "remain_registry": 0.83,
+  "remain_nearest": 0.84,
+  "call_lane": 0,
+  "plan_ok": {
+   "edf": 1,
+   "registry": 1,
+   "nearest": 1
+  }
+ }
+}

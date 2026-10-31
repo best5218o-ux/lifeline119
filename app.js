@@ -19,6 +19,7 @@ function setAIBadge() {
   m.title = NAI.ready ? '전국 재난문자 정전 442건으로 학습한 KoELECTRA-small 모델이 브라우저 안에서 문자를 읽습니다 (서버로 보내지 않음)' : 'AI 모델을 불러오는 동안은 규칙으로 읽습니다';
 }
 async function checkAI() {
+  if (/github\.io$/.test(location.hostname)) { setAIBadge(); return; } // 정적 시연 페이지에는 /api/llm 서버가 없다
   try { const r = await fetch('/api/llm'); if (r.ok) { const x = await r.json(); AI = { live: !!x.live, provider: x.provider }; } } catch (e) { }
   setAIBadge();
 }
@@ -393,7 +394,7 @@ function resultHTML() {
   <div class="cmp"><div class="lab"><span>우리 집 (최소)</span><span>${zero ? '0분' : fmt(R.p10)}</span></div><div class="bar"><i style="width:${w(zero ? 0 : R.p10)}%;background:#c81e33"></i></div>
   <div class="lab"><span>아파트 정전 10건 중 9건이 복구되는 시간</span><span>${fmt(P90)}</span></div><div class="bar"><i style="width:${w(P90)}%;background:#6b7280"></i></div></div>
   <div class="verdict ${pf >= 10 ? 'bad' : 'good'}">${pf >= 10 ? `정전이 길어지면 <b>전기보다 배터리가 먼저 끝날 수 있어요</b> (100번 중 ${pf}번). 등록해 두면 정전 때 119가 이 집을 먼저 챙깁니다.` : `대부분의 정전은 배터리로 버틸 수 있어요 (먼저 끝날 확률 100번 중 ${pf}번). 그래도 등록해 두면 긴 정전 때 119가 먼저 연락합니다.`}</div>
-  ${best && best.v > R.p10 + 0.1 ? `<div class="tip">💡 <b>가장 효과 큰 한 가지</b><br>${esc(best.t)} → 최소 <b>${fmt(best.v)}</b>로 늘어납니다.</div>` : ''}
+  ${best && best.v > R.p10 + 0.1 ? `<div class="tip">💡 <b>가장 효과 큰 한 가지</b><br>${esc(best.t)} → 최소 <b>${fmt(best.v)}</b>으로 늘어납니다.</div>` : ''}
   <div class="bigbtns"><button class="btn" id="reg119">🚒 119에 등록하기</button><button class="btn ghost" id="printBtn">🖨 냉장고에 붙일 카드</button></div>
   <details class="more"><summary>계산 자세히 보기</summary><canvas id="myHist" height="150"></canvas><p class="muted">빨간 막대가 하위 10%(최소)입니다. 보통은 ${fmt(R.p50)}. 공칭 배터리 × 충전 상태 × 노화 × 개체차를 3,000번 뽑아 계산하고, 복구시간은 기후에너지환경부 아파트 정전 382건 기록에 맞춘 분포를 씁니다.</p><pre class="actioncard" id="myCard"></pre></details>
   <p style="text-align:center;margin-top:10px"><button class="lnk" id="restart">처음부터 다시</button></p></div>`;

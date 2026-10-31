@@ -1,0 +1,18 @@
+{
+ "S5": {
+  "slots": 8,
+  "tasks": 17,
+  "at_risk": 6.92,
+  "heuristic_expected_saved": 4.38,
+  "optimal_upper_bound": 4.76,
+  "ratio": 0.919
+ },
+ "S2": {
+  "slots": 22,
+  "tasks": 25,
+  "at_risk": 16.41,
+  "heuristic_expected_saved": 12.31,
+  "optimal_upper_bound": 12.4,
+  "ratio": 0.993
+ }
+}

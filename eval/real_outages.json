@@ -1,0 +1,9 @@
+[
+ {"id":"songpa_2022","date":"2022-11-30","place":"서울 송파 올림픽선수기자촌","units":5500,"cause":"기자재","where":null,"hours":3.65,"censored":false,"src":"전국매일신문 2022-12-01"},
+ {"id":"nam_daejeon_2021","date":"2021-05-01","place":"대전 동구 가오동 남대전변전소 화재 (동구·중구)","units":64891,"cause":"화재","where":"계통","hours":2.5,"censored":false,"note":"2시간 30분 만에 98% 복구, 1천여 가구 지연","src":"세계일보·대전MBC 2021-05-01"},
+ {"id":"tanbang_2026","date":"2026-09-29","place":"대전 서구 탄방동 지상 개폐기 차량 충돌","units":null,"cause":"외물","where":"계통","hours":1.75,"censored":false,"src":"중도일보 2026-09-29"},
+ {"id":"daegu_2026","date":"2026-08-07","place":"대구 수성구 매호동 아파트 (열대야)","units":1200,"cause":"기자재","where":"단지내부","hours":6.1,"censored":false,"src":"머니투데이 2026-08-08"},
+ {"id":"seongnam_2026","date":"2026-08","place":"성남 아파트 차단기 불량 추정","units":1600,"cause":"차단기","where":"단지내부","hours":7.0,"censored":true,"note":"7시간 넘게 — 하한만 앎","src":"서울경제 2026-08-10"},
+ {"id":"wonju_2026","date":"2026-08","place":"원주 아파트 내부 전기설비 이상","units":1000,"cause":"기자재","where":"단지내부","hours":3.0,"censored":false,"note":"3시간 가량","src":"서울경제 2026-08-10"},
+ {"id":"jochiwon_2026","date":"2026-05-01","place":"세종 조치원 아파트 지하 전기실 화재","units":1429,"cause":"화재","where":"단지내부","hours":125.5,"censored":false,"note":"5-01 20시경 화재 → 5-07 01:30 전 세대 통전","src":"오마이뉴스 2026-05-07"}
+]

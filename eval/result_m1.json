@@ -1,0 +1,61 @@
+{
+ "n": 210,
+ "auto_correct": 165,
+ "category_only_correct": 29,
+ "manual": 16,
+ "wrong_autofill": 0,
+ "per_device": {
+  "trilogy_evo": {
+   "n": 30,
+   "auto": 29,
+   "cat": 0,
+   "manual": 1,
+   "wrong": 0
+  },
+  "astral150": {
+   "n": 30,
+   "auto": 30,
+   "cat": 0,
+   "manual": 0,
+   "wrong": 0
+  },
+  "trilogy100": {
+   "n": 30,
+   "auto": 29,
+   "cat": 0,
+   "manual": 1,
+   "wrong": 0
+  },
+  "ltv1200": {
+   "n": 30,
+   "auto": 27,
+   "cat": 0,
+   "manual": 3,
+   "wrong": 0
+  },
+  "inogen_g5": {
+   "n": 30,
+   "auto": 25,
+   "cat": 0,
+   "manual": 5,
+   "wrong": 0
+  },
+  "o2_home": {
+   "n": 30,
+   "auto": 0,
+   "cat": 29,
+   "manual": 1,
+   "wrong": 0
+  },
+  "ht50": {
+   "n": 30,
+   "auto": 25,
+   "cat": 0,
+   "manual": 5,
+   "wrong": 0
+  }
+ },
+ "model_specific_n": 180,
+ "model_specific_auto_rate": 0.917,
+ "wrong_rate": 0
+}

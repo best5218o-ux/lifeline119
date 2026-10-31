@@ -1,0 +1,186 @@
+{
+ "by_device": [
+  {
+   "dev": "Trilogy Evo",
+   "basis": "spec",
+   "nominal_h": 7.5,
+   "age_y": 0,
+   "p10": 4.22,
+   "p50": 6.71,
+   "p90": 10.64,
+   "p_below_nominal": 0.62
+  },
+  {
+   "dev": "Trilogy Evo",
+   "basis": "spec",
+   "nominal_h": 7.5,
+   "age_y": 3,
+   "p10": 3.35,
+   "p50": 5.39,
+   "p90": 8.67,
+   "p_below_nominal": 0.81
+  },
+  {
+   "dev": "Trilogy Evo",
+   "basis": "spec",
+   "nominal_h": 7.5,
+   "age_y": 6,
+   "p10": 2.34,
+   "p50": 4.01,
+   "p90": 6.88,
+   "p_below_nominal": 0.93
+  },
+  {
+   "dev": "Astral 150",
+   "basis": "spec",
+   "nominal_h": 8,
+   "age_y": 0,
+   "p10": 4.5,
+   "p50": 7.16,
+   "p90": 11.35,
+   "p_below_nominal": 0.62
+  },
+  {
+   "dev": "Astral 150",
+   "basis": "spec",
+   "nominal_h": 8,
+   "age_y": 3,
+   "p10": 3.58,
+   "p50": 5.75,
+   "p90": 9.24,
+   "p_below_nominal": 0.81
+  },
+  {
+   "dev": "Astral 150",
+   "basis": "spec",
+   "nominal_h": 8,
+   "age_y": 6,
+   "p10": 2.5,
+   "p50": 4.28,
+   "p90": 7.33,
+   "p_below_nominal": 0.93
+  },
+  {
+   "dev": "Inogen One G5",
+   "basis": "spec",
+   "nominal_h": 6.5,
+   "age_y": 0,
+   "p10": 3.66,
+   "p50": 5.82,
+   "p90": 9.22,
+   "p_below_nominal": 0.62
+  },
+  {
+   "dev": "Inogen One G5",
+   "basis": "spec",
+   "nominal_h": 6.5,
+   "age_y": 3,
+   "p10": 2.91,
+   "p50": 4.67,
+   "p90": 7.51,
+   "p_below_nominal": 0.81
+  },
+  {
+   "dev": "Inogen One G5",
+   "basis": "spec",
+   "nominal_h": 6.5,
+   "age_y": 6,
+   "p10": 2.03,
+   "p50": 3.47,
+   "p90": 5.96,
+   "p_below_nominal": 0.93
+  },
+  {
+   "dev": "LTV 1200",
+   "basis": "bench",
+   "nominal_h": 1.8,
+   "age_y": 0,
+   "p10": 1.3,
+   "p50": 1.7,
+   "p90": 2.22,
+   "p_below_nominal": 0.6
+  },
+  {
+   "dev": "LTV 1200",
+   "basis": "bench",
+   "nominal_h": 1.8,
+   "age_y": 3,
+   "p10": 1.03,
+   "p50": 1.37,
+   "p90": 1.83,
+   "p_below_nominal": 0.89
+  },
+  {
+   "dev": "LTV 1200",
+   "basis": "bench",
+   "nominal_h": 1.8,
+   "age_y": 6,
+   "p10": 0.69,
+   "p50": 1.02,
+   "p90": 1.49,
+   "p_below_nominal": 0.98
+  },
+  {
+   "dev": "HT50",
+   "basis": "bench",
+   "nominal_h": 9.35,
+   "age_y": 0,
+   "p10": 6.75,
+   "p50": 8.84,
+   "p90": 11.54,
+   "p_below_nominal": 0.6
+  },
+  {
+   "dev": "HT50",
+   "basis": "bench",
+   "nominal_h": 9.35,
+   "age_y": 3,
+   "p10": 5.32,
+   "p50": 7.11,
+   "p90": 9.49,
+   "p_below_nominal": 0.89
+  },
+  {
+   "dev": "HT50",
+   "basis": "bench",
+   "nominal_h": 9.35,
+   "age_y": 6,
+   "p10": 3.56,
+   "p50": 5.32,
+   "p90": 7.74,
+   "p_below_nominal": 0.98
+  }
+ ],
+ "sensitivity_trilogy_evo_3y": [
+  {
+   "case": "기준",
+   "p10": 3.36,
+   "p50": 5.4
+  },
+  {
+   "case": "개체편차 sd 0.25",
+   "p10": 3.81,
+   "p50": 5.43
+  },
+  {
+   "case": "개체편차 sd 0.45",
+   "p10": 2.95,
+   "p50": 5.39
+  },
+  {
+   "case": "노화 연 1~5%",
+   "p10": 3.84,
+   "p50": 6.12
+  },
+  {
+   "case": "노화 연 5~15%",
+   "p10": 2.86,
+   "p50": 4.69
+  },
+  {
+   "case": "편차 중앙 0.85",
+   "p10": 3.01,
+   "p50": 4.83
+  }
+ ]
+}

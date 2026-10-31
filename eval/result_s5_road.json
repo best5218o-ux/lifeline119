@@ -1,0 +1,9 @@
+{
+ "households": 68,
+ "resources": 8,
+ "tasks": 17,
+ "at_risk_no_action": 6.8,
+ "remain_edf": 2.6,
+ "remain_registry": 3.2,
+ "remain_nearest": 3.2
+}

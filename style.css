@@ -103,7 +103,7 @@ details>summary.card-h{cursor:pointer;margin:0}details[open]>summary.card-h{marg
 .modal{position:fixed;inset:0;background:#0008;z-index:3000;display:flex;align-items:center;justify-content:center;padding:16px}.modal[hidden]{display:none}
 .mbox{background:#fff;border-radius:14px;max-width:620px;width:100%;max-height:88vh;overflow:auto;padding:20px;position:relative}.mbox pre{white-space:pre-wrap;background:#f7f8fa;padding:10px;border-radius:8px;font-family:inherit;font-size:14px}
 .x{position:absolute;right:10px;top:6px;border:0;background:none;font-size:26px;cursor:pointer}
-.alt{display:flex;flex-direction:column;gap:6px;margin-top:8px}.alt button{text-align:left}
+.alt{display:flex;flex-direction:column;gap:6px;margin-top:8px}.alt button{text-align:left;white-space:normal}
 .demo{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:2500;width:min(760px,calc(100% - 32px))}.demo[hidden]{display:none}
 .demo-in{background:#111827;color:#fff;border-radius:16px;padding:14px 16px 10px;box-shadow:0 10px 30px #0006;position:relative}
 .demo-in p{margin:0 0 8px;font-size:17px;line-height:1.5;padding-right:40px}.demo-in p b{color:#ffd34d}

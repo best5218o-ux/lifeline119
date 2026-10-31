@@ -1,0 +1,90 @@
+{
+ "n": 7,
+ "inside_90": 6,
+ "cases": [
+  {
+   "id": "songpa_2022",
+   "cause": "기자재",
+   "where": null,
+   "actual_h": 3.65,
+   "censored": false,
+   "model_pct": 47.4,
+   "p05": 0.7,
+   "p50": 3.9,
+   "p95": 23.8,
+   "within_90": true
+  },
+  {
+   "id": "nam_daejeon_2021",
+   "cause": "화재",
+   "where": "계통",
+   "actual_h": 2.5,
+   "censored": false,
+   "model_pct": 72.8,
+   "p05": 0.4,
+   "p50": 1.5,
+   "p95": 6,
+   "within_90": true
+  },
+  {
+   "id": "tanbang_2026",
+   "cause": "외물",
+   "where": "계통",
+   "actual_h": 1.75,
+   "censored": false,
+   "model_pct": 57.3,
+   "p05": 0.4,
+   "p50": 1.5,
+   "p95": 6,
+   "within_90": true
+  },
+  {
+   "id": "daegu_2026",
+   "cause": "기자재",
+   "where": "단지내부",
+   "actual_h": 6.1,
+   "censored": false,
+   "model_pct": 65.7,
+   "p05": 0.7,
+   "p50": 3.9,
+   "p95": 23.8,
+   "within_90": true
+  },
+  {
+   "id": "seongnam_2026",
+   "cause": "차단기",
+   "where": "단지내부",
+   "actual_h": 7,
+   "censored": true,
+   "model_pct": 69.9,
+   "p05": 0.7,
+   "p50": 3.9,
+   "p95": 23.8,
+   "within_90": true
+  },
+  {
+   "id": "wonju_2026",
+   "cause": "기자재",
+   "where": "단지내부",
+   "actual_h": 3,
+   "censored": false,
+   "model_pct": 39.4,
+   "p05": 0.7,
+   "p50": 3.9,
+   "p95": 23.8,
+   "within_90": true
+  },
+  {
+   "id": "jochiwon_2026",
+   "cause": "화재",
+   "where": "단지내부",
+   "actual_h": 125.5,
+   "censored": false,
+   "model_pct": 99.6,
+   "p05": 12.4,
+   "p50": 18.5,
+   "p95": 52.9,
+   "within_90": false
+  }
+ ]
+}
