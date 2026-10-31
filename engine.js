@@ -45,6 +45,7 @@ const SOURCES = {
   hira2025: '심평원 「의료장비 상세현황」(data.go.kr 15051055, 2025-12) — 대전 병원 인공호흡기 신고 65대(대청병원 15대 등), 이송 후보 표시에 사용(신고 기준이라 누락 있음)',
   mfds2026: '식약처 의료기기 품목정보 API(data.go.kr 15073906)·회수·판매중지 API(15056785) 2026-10-31 실제 호출 — 사양 DB 모델의 국내 허가번호·유효 여부·회수 보고 이력 (Trilogy Evo 국내 모델코드 KR2110X15B 확인)',
   live2026: '실시간 공공 API(2026-10-31 16:48 수신): 기상청 초단기실황(15084084) 서구 24개 동 · 국립중앙의료원 응급의료기관 실시간 병상(15000563) 대전 9곳 · 환경공단 전기차 충전기(15076352) 서구 4,150기',
+  road2026: 'OSRM table API(router.project-osrm.org, OpenStreetMap 도로망 자동차 프로필) — 시나리오 자원·가구 사이 도로 최단경로 소요시간(신호 대기·혼잡 미반영), prep/road_osrm.py',
   busan2023: '부산광역시 재난문자 발송현황 2023-05-19 남구 — 「3시간 가량」 → 「내일 오전 9시 복구 예정」으로 변경'
 };
 
@@ -282,11 +283,15 @@ function compat(r, dev) {
   if (sp.wh) { const soc = r.soc == null ? 1 : r.soc, h = sp.wh * soc * 0.85 / need.w; if (h < 1) return { ok: false, why: '잔량 부족' }; return { ok: true, how: `AC ${sp.w}W · 잔량으로 약 ${h.toFixed(0)}시간` }; }
   return { ok: true, how: `AC ${sp.w}W` };
 }
-function travelH(a, b) { return haversineKm(a, b) * DISPATCH.road_factor / DISPATCH.speed_kmh; }
+// 도로망 이동시간 표(OSRM, OpenStreetMap 도로망 자동차 경로) — 같은 시나리오의 자원·가구 id 쌍이면 표를 쓰고, 없으면 직선×1.4÷30km/h 가정
+let ROAD = null;
+function setRoad(tbl) { if (!tbl || !tbl.ids) { ROAD = null; return; } const ix = {}; tbl.ids.forEach((id, i) => ix[id] = i); ROAD = { ix, t: tbl.t }; }
+function roadH(a, b) { if (!ROAD || a == null || b == null) return null; const i = ROAD.ix[a.id], j = ROAD.ix[b.id]; if (i == null || j == null) return null; const v = ROAD.t[i][j]; return v == null ? null : v; }
+function travelH(a, b) { const r = roadH(a, b); return r != null ? r : haversineKm(a, b) * DISPATCH.road_factor / DISPATCH.speed_kmh; }
 /* tasks: [{id, lat, lon, deadline_h}] , resources: [{id, name, lat, lon, kind, cap}] */
 function planDispatch(tasks, resources, policy) {
   policy = policy || 'edf';
-  const R = resources.map(r => ({ ...r, t: DISPATCH.dispatch_delay_h, at: { lat: r.lat, lon: r.lon }, left: r.cap || 1, route: [] }));
+  const R = resources.map(r => ({ ...r, t: DISPATCH.dispatch_delay_h, at: { lat: r.lat, lon: r.lon, id: r.id }, left: r.cap || 1, route: [] }));
   let T = tasks.slice();
   if (policy === 'edf') T.sort((a, b) => a.deadline_h - b.deadline_h);
   else if (policy === 'registry') T.sort((a, b) => (a.reg_order || 0) - (b.reg_order || 0));
@@ -304,14 +309,14 @@ function planDispatch(tasks, resources, policy) {
     if (policy === 'edf' && !best) { plan.push({ task: k, res: null, arr: bestAny ? bestAny.arr : null, ok: false, lane: 'call' }); continue; }
     const pick = policy === 'edf' ? best : bestAny;
     if (!pick) { plan.push({ task: k, res: null, arr: null, ok: false, lane: 'none' }); continue; }
-    const r = pick.r; r.left--; r.t = pick.arr + DISPATCH.service_h; r.at = { lat: k.lat, lon: k.lon }; r.route.push(k.id);
+    const r = pick.r; r.left--; r.t = pick.arr + DISPATCH.service_h; r.at = { lat: k.lat, lon: k.lon, id: k.id }; r.route.push(k.id);
     plan.push({ task: k, res: r.id, res_name: r.name, how: compat(r, k.dev).how, arr: pick.arr, ok: pick.arr <= k.deadline_h, lane: 'power' });
   }
   if (policy === 'edf') {
     // 2차: 남은 자원을 기한 넘긴 집에 가장 빨리 닿는 순으로 보낸다 (늦더라도 간다 — 실제 소진시각은 하한보다 늦을 수 있다)
     for (const p of plan.filter(q => q.lane === 'call').sort((a, b) => a.task.deadline_h - b.task.deadline_h)) {
       let b = null; for (const r of R) { if (r.left <= 0 || !compat(r, p.task.dev).ok) continue; const arr = r.t + travelH(r.at, p.task); if (!b || arr < b.arr) b = { r, arr }; }
-      if (!b) continue; const r = b.r; r.left--; r.t = b.arr + DISPATCH.service_h; r.at = { lat: p.task.lat, lon: p.task.lon }; r.route.push(p.task.id);
+      if (!b) continue; const r = b.r; r.left--; r.t = b.arr + DISPATCH.service_h; r.at = { lat: p.task.lat, lon: p.task.lon, id: p.task.id }; r.route.push(p.task.id);
       Object.assign(p, { res: r.id, res_name: r.name, how: compat(r, p.task.dev).how, arr: b.arr, ok: false, lane: 'late' });
     }
     improveSwap(plan, resources);
@@ -346,6 +351,6 @@ function templateHousehold(a) {
   return lines.join('\n');
 }
 
-const API = { rng, normal, quantile, probit, SOURCES, DEVICE_DB, KIND_KO, matchDevice, BATTERY_PRIOR, batterySamples, REST_PRIOR, REST_PRIOR_GRID, priorFor, ETA_NOISE, restorationSamples, parseNotice, fromAI, parsePoint, parseDur, scopeOf, assess, haversineKm, DISPATCH, travelH, planDispatch, compat, resSpec, RES_SPEC, DEVICE_POWER, fmtH, templateOrder, templateHousehold, fitRestorationPrior };
+const API = { rng, normal, quantile, probit, SOURCES, DEVICE_DB, KIND_KO, matchDevice, BATTERY_PRIOR, batterySamples, REST_PRIOR, REST_PRIOR_GRID, priorFor, ETA_NOISE, restorationSamples, parseNotice, fromAI, parsePoint, parseDur, scopeOf, assess, haversineKm, DISPATCH, travelH, setRoad, planDispatch, compat, resSpec, RES_SPEC, DEVICE_POWER, fmtH, templateOrder, templateHousehold, fitRestorationPrior };
 if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.LL = API;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

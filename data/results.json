@@ -1,1 +1,520 @@
-{"dispatch": {"S2_notice1": {"tasks": 25, "resources": 14, "at_risk_no_action": 27.74, "remain_edf": 14.56, "remain_registry": 15.646666666666667, "remain_nearest": 15.44, "call_lane": 5, "plan_ok": {"edf": 20, "registry": 15, "nearest": 18}}, "S2_notice2": {"tasks": 72, "resources": 14, "at_risk_no_action": 35.61666666666667, "remain_edf": 25.15, "remain_registry": 28.946666666666665, "remain_nearest": 29.16, "call_lane": 52, "plan_ok": {"edf": 20, "registry": 12, "nearest": 18}}, "S1_t0": {"tasks": 3, "resources": 6, "at_risk_no_action": 2.31, "remain_edf": 1.0666666666666667, "remain_registry": 1.05, "remain_nearest": 1.0633333333333332, "call_lane": 0, "plan_ok": {"edf": 1, "registry": 1, "nearest": 1}}}, "s5": {"households": 68, "resources": 8, "tasks": 17, "at_risk_no_action": 6.8, "remain_edf": 2.5, "remain_registry": 3.3, "remain_nearest": 3.3}, "opt": {"S5": {"slots": 8, "tasks": 17, "at_risk": 6.92, "heuristic_expected_saved": 4.37, "optimal_upper_bound": 4.69, "ratio": 0.932}, "S2": {"slots": 20, "tasks": 25, "at_risk": 16.41, "heuristic_expected_saved": 13.18, "optimal_upper_bound": 13.95, "ratio": 0.945}}, "m1": {"n": 210, "auto_correct": 165, "category_only_correct": 29, "manual": 16, "wrong_autofill": 0, "per_device": {"trilogy_evo": {"n": 30, "auto": 29, "cat": 0, "manual": 1, "wrong": 0}, "astral150": {"n": 30, "auto": 30, "cat": 0, "manual": 0, "wrong": 0}, "trilogy100": {"n": 30, "auto": 29, "cat": 0, "manual": 1, "wrong": 0}, "ltv1200": {"n": 30, "auto": 27, "cat": 0, "manual": 3, "wrong": 0}, "inogen_g5": {"n": 30, "auto": 25, "cat": 0, "manual": 5, "wrong": 0}, "o2_home": {"n": 30, "auto": 0, "cat": 29, "manual": 1, "wrong": 0}, "ht50": {"n": 30, "auto": 25, "cat": 0, "manual": 5, "wrong": 0}}, "model_specific_n": 180, "model_specific_auto_rate": 0.917, "wrong_rate": 0}, "restore": {"n": 7, "inside_90": 6, "cases": [{"id": "songpa_2022", "cause": "기자재", "where": null, "actual_h": 3.65, "censored": false, "model_pct": 47.4, "p05": 0.7, "p50": 3.9, "p95": 23.8, "within_90": true}, {"id": "nam_daejeon_2021", "cause": "화재", "where": "계통", "actual_h": 2.5, "censored": false, "model_pct": 72.8, "p05": 0.4, "p50": 1.5, "p95": 6, "within_90": true}, {"id": "tanbang_2026", "cause": "외물", "where": "계통", "actual_h": 1.75, "censored": false, "model_pct": 57.3, "p05": 0.4, "p50": 1.5, "p95": 6, "within_90": true}, {"id": "daegu_2026", "cause": "기자재", "where": "단지내부", "actual_h": 6.1, "censored": false, "model_pct": 65.7, "p05": 0.7, "p50": 3.9, "p95": 23.8, "within_90": true}, {"id": "seongnam_2026", "cause": "차단기", "where": "단지내부", "actual_h": 7, "censored": true, "model_pct": 69.9, "p05": 0.7, "p50": 3.9, "p95": 23.8, "within_90": true}, {"id": "wonju_2026", "cause": "기자재", "where": "단지내부", "actual_h": 3, "censored": false, "model_pct": 39.4, "p05": 0.7, "p50": 3.9, "p95": 23.8, "within_90": true}, {"id": "jochiwon_2026", "cause": "화재", "where": "단지내부", "actual_h": 125.5, "censored": false, "model_pct": 99.6, "p05": 12.4, "p50": 18.5, "p95": 52.9, "within_90": false}]}, "m2": {"by_device": [{"dev": "Trilogy Evo", "basis": "spec", "nominal_h": 7.5, "age_y": 0, "p10": 4.22, "p50": 6.71, "p90": 10.64, "p_below_nominal": 0.62}, {"dev": "Trilogy Evo", "basis": "spec", "nominal_h": 7.5, "age_y": 3, "p10": 3.35, "p50": 5.39, "p90": 8.67, "p_below_nominal": 0.81}, {"dev": "Trilogy Evo", "basis": "spec", "nominal_h": 7.5, "age_y": 6, "p10": 2.34, "p50": 4.01, "p90": 6.88, "p_below_nominal": 0.93}, {"dev": "Astral 150", "basis": "spec", "nominal_h": 8, "age_y": 0, "p10": 4.5, "p50": 7.16, "p90": 11.35, "p_below_nominal": 0.62}, {"dev": "Astral 150", "basis": "spec", "nominal_h": 8, "age_y": 3, "p10": 3.58, "p50": 5.75, "p90": 9.24, "p_below_nominal": 0.81}, {"dev": "Astral 150", "basis": "spec", "nominal_h": 8, "age_y": 6, "p10": 2.5, "p50": 4.28, "p90": 7.33, "p_below_nominal": 0.93}, {"dev": "Inogen One G5", "basis": "spec", "nominal_h": 6.5, "age_y": 0, "p10": 3.66, "p50": 5.82, "p90": 9.22, "p_below_nominal": 0.62}, {"dev": "Inogen One G5", "basis": "spec", "nominal_h": 6.5, "age_y": 3, "p10": 2.91, "p50": 4.67, "p90": 7.51, "p_below_nominal": 0.81}, {"dev": "Inogen One G5", "basis": "spec", "nominal_h": 6.5, "age_y": 6, "p10": 2.03, "p50": 3.47, "p90": 5.96, "p_below_nominal": 0.93}, {"dev": "LTV 1200", "basis": "bench", "nominal_h": 1.8, "age_y": 0, "p10": 1.3, "p50": 1.7, "p90": 2.22, "p_below_nominal": 0.6}, {"dev": "LTV 1200", "basis": "bench", "nominal_h": 1.8, "age_y": 3, "p10": 1.03, "p50": 1.37, "p90": 1.83, "p_below_nominal": 0.89}, {"dev": "LTV 1200", "basis": "bench", "nominal_h": 1.8, "age_y": 6, "p10": 0.69, "p50": 1.02, "p90": 1.49, "p_below_nominal": 0.98}, {"dev": "HT50", "basis": "bench", "nominal_h": 9.35, "age_y": 0, "p10": 6.75, "p50": 8.84, "p90": 11.54, "p_below_nominal": 0.6}, {"dev": "HT50", "basis": "bench", "nominal_h": 9.35, "age_y": 3, "p10": 5.32, "p50": 7.11, "p90": 9.49, "p_below_nominal": 0.89}, {"dev": "HT50", "basis": "bench", "nominal_h": 9.35, "age_y": 6, "p10": 3.56, "p50": 5.32, "p90": 7.74, "p_below_nominal": 0.98}], "sensitivity_trilogy_evo_3y": [{"case": "기준", "p10": 3.36, "p50": 5.4}, {"case": "개체편차 sd 0.25", "p10": 3.81, "p50": 5.43}, {"case": "개체편차 sd 0.45", "p10": 2.95, "p50": 5.39}, {"case": "노화 연 1~5%", "p10": 3.84, "p50": 6.12}, {"case": "노화 연 5~15%", "p10": 2.86, "p50": 4.69}, {"case": "편차 중앙 0.85", "p10": 3.01, "p50": 4.83}]}, "prior_change": {"S5_tasks": [68, 17], "S2_tasks": [55, 25], "S2_call": [35, 5]}, "notice_ai": {"test": "2026-01~10 실제 재난문자 204건(학습에 안 쓴 기간)", "train": "2023-09~2025-12 실제 238건 + 템플릿 증강 1,500건", "n_seeds": 3, "rule": {"kind_acc": 0.7009803921568627, "kind_macroF1": 0.4479775372917555, "cause_acc_known": 0.2982456140350877, "span_F1": null, "eta_hit": 11, "eta_false": 1}, "tfidf": {"kind_acc": 0.8137254901960784, "kind_macroF1": 0.5699507194953677, "cause_acc_known": 0.2807017543859649, "span_F1": null, "eta_hit": null, "eta_false": null}, "tfidf_aug": {"kind_acc": 0.8970588235294118, "kind_macroF1": 0.7277871977688519, "cause_acc_known": 0.7368421052631579, "span_F1": null, "eta_hit": null, "eta_false": null}, "ai": {"kind_acc": [0.8839869281045751, 0.010072571900276118], "kind_macroF1": [0.7412854482009118, 0.01791980024999701], "cause_acc_known": [0.8304093567251463, 0.054231687108161994], "span_F1": [0.7742519534972366, 0.027889395592819888], "eta_hit": [29.666666666666668, 0.4714045207910317], "eta_false": [3.0, 0.816496580927726]}, "ai_rule": {"kind_acc": [0.8839869281045751, 0.010072571900276118], "kind_macroF1": [0.7412854482009118, 0.01791980024999701], "cause_acc_known": [0.8362573099415204, 0.05789178325503895], "span_F1": [0.7742519534972366, 0.027889395592819888], "eta_hit": [29.666666666666668, 0.4714045207910317], "eta_false": [3.3333333333333335, 1.247219128924647]}, "eta_n": 30}, "pairs": {"n": 36, "median_h": 1.4603890554290186, "p90_h": 4.207104176616502, "mu": 0.37870287654298207, "sd": 0.825586525003105, "eta_bias": -0.6082223501798745, "eta_sd": 0.5192243515670204, "eta_bias_ci": [-0.8892087556372252, -0.25720693987252824]}}
+{
+ "dispatch": {
+  "S2_notice1": {
+   "tasks": 25,
+   "resources": 16,
+   "at_risk_no_action": 27.74,
+   "remain_edf": 15.426666666666666,
+   "remain_registry": 16.903333333333332,
+   "remain_nearest": 17.41,
+   "call_lane": 7,
+   "plan_ok": {
+    "edf": 18,
+    "registry": 17,
+    "nearest": 16
+   }
+  },
+  "S2_notice2": {
+   "tasks": 72,
+   "resources": 16,
+   "at_risk_no_action": 35.61666666666667,
+   "remain_edf": 25.18,
+   "remain_registry": 28.963333333333335,
+   "remain_nearest": 29.113333333333333,
+   "call_lane": 51,
+   "plan_ok": {
+    "edf": 21,
+    "registry": 14,
+    "nearest": 19
+   }
+  },
+  "S1_t0": {
+   "tasks": 3,
+   "resources": 6,
+   "at_risk_no_action": 2.31,
+   "remain_edf": 0.84,
+   "remain_registry": 0.83,
+   "remain_nearest": 0.84,
+   "call_lane": 0,
+   "plan_ok": {
+    "edf": 1,
+    "registry": 1,
+    "nearest": 1
+   }
+  }
+ },
+ "s5": {
+  "households": 68,
+  "resources": 8,
+  "tasks": 17,
+  "at_risk_no_action": 6.8,
+  "remain_edf": 2.6,
+  "remain_registry": 3.2,
+  "remain_nearest": 3.2
+ },
+ "opt": {
+  "S5": {
+   "slots": 8,
+   "tasks": 17,
+   "at_risk": 6.92,
+   "heuristic_expected_saved": 4.38,
+   "optimal_upper_bound": 4.76,
+   "ratio": 0.919
+  },
+  "S2": {
+   "slots": 22,
+   "tasks": 25,
+   "at_risk": 16.41,
+   "heuristic_expected_saved": 12.31,
+   "optimal_upper_bound": 12.4,
+   "ratio": 0.993
+  }
+ },
+ "m1": {
+  "n": 210,
+  "auto_correct": 165,
+  "category_only_correct": 29,
+  "manual": 16,
+  "wrong_autofill": 0,
+  "per_device": {
+   "trilogy_evo": {
+    "n": 30,
+    "auto": 29,
+    "cat": 0,
+    "manual": 1,
+    "wrong": 0
+   },
+   "astral150": {
+    "n": 30,
+    "auto": 30,
+    "cat": 0,
+    "manual": 0,
+    "wrong": 0
+   },
+   "trilogy100": {
+    "n": 30,
+    "auto": 29,
+    "cat": 0,
+    "manual": 1,
+    "wrong": 0
+   },
+   "ltv1200": {
+    "n": 30,
+    "auto": 27,
+    "cat": 0,
+    "manual": 3,
+    "wrong": 0
+   },
+   "inogen_g5": {
+    "n": 30,
+    "auto": 25,
+    "cat": 0,
+    "manual": 5,
+    "wrong": 0
+   },
+   "o2_home": {
+    "n": 30,
+    "auto": 0,
+    "cat": 29,
+    "manual": 1,
+    "wrong": 0
+   },
+   "ht50": {
+    "n": 30,
+    "auto": 25,
+    "cat": 0,
+    "manual": 5,
+    "wrong": 0
+   }
+  },
+  "model_specific_n": 180,
+  "model_specific_auto_rate": 0.917,
+  "wrong_rate": 0
+ },
+ "restore": {
+  "n": 7,
+  "inside_90": 6,
+  "cases": [
+   {
+    "id": "songpa_2022",
+    "cause": "기자재",
+    "where": null,
+    "actual_h": 3.65,
+    "censored": false,
+    "model_pct": 47.4,
+    "p05": 0.7,
+    "p50": 3.9,
+    "p95": 23.8,
+    "within_90": true
+   },
+   {
+    "id": "nam_daejeon_2021",
+    "cause": "화재",
+    "where": "계통",
+    "actual_h": 2.5,
+    "censored": false,
+    "model_pct": 72.8,
+    "p05": 0.4,
+    "p50": 1.5,
+    "p95": 6,
+    "within_90": true
+   },
+   {
+    "id": "tanbang_2026",
+    "cause": "외물",
+    "where": "계통",
+    "actual_h": 1.75,
+    "censored": false,
+    "model_pct": 57.3,
+    "p05": 0.4,
+    "p50": 1.5,
+    "p95": 6,
+    "within_90": true
+   },
+   {
+    "id": "daegu_2026",
+    "cause": "기자재",
+    "where": "단지내부",
+    "actual_h": 6.1,
+    "censored": false,
+    "model_pct": 65.7,
+    "p05": 0.7,
+    "p50": 3.9,
+    "p95": 23.8,
+    "within_90": true
+   },
+   {
+    "id": "seongnam_2026",
+    "cause": "차단기",
+    "where": "단지내부",
+    "actual_h": 7,
+    "censored": true,
+    "model_pct": 69.9,
+    "p05": 0.7,
+    "p50": 3.9,
+    "p95": 23.8,
+    "within_90": true
+   },
+   {
+    "id": "wonju_2026",
+    "cause": "기자재",
+    "where": "단지내부",
+    "actual_h": 3,
+    "censored": false,
+    "model_pct": 39.4,
+    "p05": 0.7,
+    "p50": 3.9,
+    "p95": 23.8,
+    "within_90": true
+   },
+   {
+    "id": "jochiwon_2026",
+    "cause": "화재",
+    "where": "단지내부",
+    "actual_h": 125.5,
+    "censored": false,
+    "model_pct": 99.6,
+    "p05": 12.4,
+    "p50": 18.5,
+    "p95": 52.9,
+    "within_90": false
+   }
+  ]
+ },
+ "m2": {
+  "by_device": [
+   {
+    "dev": "Trilogy Evo",
+    "basis": "spec",
+    "nominal_h": 7.5,
+    "age_y": 0,
+    "p10": 4.22,
+    "p50": 6.71,
+    "p90": 10.64,
+    "p_below_nominal": 0.62
+   },
+   {
+    "dev": "Trilogy Evo",
+    "basis": "spec",
+    "nominal_h": 7.5,
+    "age_y": 3,
+    "p10": 3.35,
+    "p50": 5.39,
+    "p90": 8.67,
+    "p_below_nominal": 0.81
+   },
+   {
+    "dev": "Trilogy Evo",
+    "basis": "spec",
+    "nominal_h": 7.5,
+    "age_y": 6,
+    "p10": 2.34,
+    "p50": 4.01,
+    "p90": 6.88,
+    "p_below_nominal": 0.93
+   },
+   {
+    "dev": "Astral 150",
+    "basis": "spec",
+    "nominal_h": 8,
+    "age_y": 0,
+    "p10": 4.5,
+    "p50": 7.16,
+    "p90": 11.35,
+    "p_below_nominal": 0.62
+   },
+   {
+    "dev": "Astral 150",
+    "basis": "spec",
+    "nominal_h": 8,
+    "age_y": 3,
+    "p10": 3.58,
+    "p50": 5.75,
+    "p90": 9.24,
+    "p_below_nominal": 0.81
+   },
+   {
+    "dev": "Astral 150",
+    "basis": "spec",
+    "nominal_h": 8,
+    "age_y": 6,
+    "p10": 2.5,
+    "p50": 4.28,
+    "p90": 7.33,
+    "p_below_nominal": 0.93
+   },
+   {
+    "dev": "Inogen One G5",
+    "basis": "spec",
+    "nominal_h": 6.5,
+    "age_y": 0,
+    "p10": 3.66,
+    "p50": 5.82,
+    "p90": 9.22,
+    "p_below_nominal": 0.62
+   },
+   {
+    "dev": "Inogen One G5",
+    "basis": "spec",
+    "nominal_h": 6.5,
+    "age_y": 3,
+    "p10": 2.91,
+    "p50": 4.67,
+    "p90": 7.51,
+    "p_below_nominal": 0.81
+   },
+   {
+    "dev": "Inogen One G5",
+    "basis": "spec",
+    "nominal_h": 6.5,
+    "age_y": 6,
+    "p10": 2.03,
+    "p50": 3.47,
+    "p90": 5.96,
+    "p_below_nominal": 0.93
+   },
+   {
+    "dev": "LTV 1200",
+    "basis": "bench",
+    "nominal_h": 1.8,
+    "age_y": 0,
+    "p10": 1.3,
+    "p50": 1.7,
+    "p90": 2.22,
+    "p_below_nominal": 0.6
+   },
+   {
+    "dev": "LTV 1200",
+    "basis": "bench",
+    "nominal_h": 1.8,
+    "age_y": 3,
+    "p10": 1.03,
+    "p50": 1.37,
+    "p90": 1.83,
+    "p_below_nominal": 0.89
+   },
+   {
+    "dev": "LTV 1200",
+    "basis": "bench",
+    "nominal_h": 1.8,
+    "age_y": 6,
+    "p10": 0.69,
+    "p50": 1.02,
+    "p90": 1.49,
+    "p_below_nominal": 0.98
+   },
+   {
+    "dev": "HT50",
+    "basis": "bench",
+    "nominal_h": 9.35,
+    "age_y": 0,
+    "p10": 6.75,
+    "p50": 8.84,
+    "p90": 11.54,
+    "p_below_nominal": 0.6
+   },
+   {
+    "dev": "HT50",
+    "basis": "bench",
+    "nominal_h": 9.35,
+    "age_y": 3,
+    "p10": 5.32,
+    "p50": 7.11,
+    "p90": 9.49,
+    "p_below_nominal": 0.89
+   },
+   {
+    "dev": "HT50",
+    "basis": "bench",
+    "nominal_h": 9.35,
+    "age_y": 6,
+    "p10": 3.56,
+    "p50": 5.32,
+    "p90": 7.74,
+    "p_below_nominal": 0.98
+   }
+  ],
+  "sensitivity_trilogy_evo_3y": [
+   {
+    "case": "기준",
+    "p10": 3.36,
+    "p50": 5.4
+   },
+   {
+    "case": "개체편차 sd 0.25",
+    "p10": 3.81,
+    "p50": 5.43
+   },
+   {
+    "case": "개체편차 sd 0.45",
+    "p10": 2.95,
+    "p50": 5.39
+   },
+   {
+    "case": "노화 연 1~5%",
+    "p10": 3.84,
+    "p50": 6.12
+   },
+   {
+    "case": "노화 연 5~15%",
+    "p10": 2.86,
+    "p50": 4.69
+   },
+   {
+    "case": "편차 중앙 0.85",
+    "p10": 3.01,
+    "p50": 4.83
+   }
+  ]
+ },
+ "prior_change": {
+  "S5_tasks": [
+   68,
+   17
+  ],
+  "S2_tasks": [
+   55,
+   25
+  ],
+  "S2_call": [
+   35,
+   5
+  ]
+ },
+ "notice_ai": {
+  "test": "2026-01~10 실제 재난문자 204건(학습에 안 쓴 기간)",
+  "train": "2023-09~2025-12 실제 238건 + 템플릿 증강 1,500건",
+  "n_seeds": 3,
+  "rule": {
+   "kind_acc": 0.7009803921568627,
+   "kind_macroF1": 0.4479775372917555,
+   "cause_acc_known": 0.2982456140350877,
+   "span_F1": null,
+   "eta_hit": 11,
+   "eta_false": 1
+  },
+  "tfidf": {
+   "kind_acc": 0.8137254901960784,
+   "kind_macroF1": 0.5699507194953677,
+   "cause_acc_known": 0.2807017543859649,
+   "span_F1": null,
+   "eta_hit": null,
+   "eta_false": null
+  },
+  "tfidf_aug": {
+   "kind_acc": 0.8970588235294118,
+   "kind_macroF1": 0.7277871977688519,
+   "cause_acc_known": 0.7368421052631579,
+   "span_F1": null,
+   "eta_hit": null,
+   "eta_false": null
+  },
+  "ai": {
+   "kind_acc": [
+    0.8839869281045751,
+    0.010072571900276118
+   ],
+   "kind_macroF1": [
+    0.7412854482009118,
+    0.01791980024999701
+   ],
+   "cause_acc_known": [
+    0.8304093567251463,
+    0.054231687108161994
+   ],
+   "span_F1": [
+    0.7742519534972366,
+    0.027889395592819888
+   ],
+   "eta_hit": [
+    29.666666666666668,
+    0.4714045207910317
+   ],
+   "eta_false": [
+    3.0,
+    0.816496580927726
+   ]
+  },
+  "ai_rule": {
+   "kind_acc": [
+    0.8839869281045751,
+    0.010072571900276118
+   ],
+   "kind_macroF1": [
+    0.7412854482009118,
+    0.01791980024999701
+   ],
+   "cause_acc_known": [
+    0.8362573099415204,
+    0.05789178325503895
+   ],
+   "span_F1": [
+    0.7742519534972366,
+    0.027889395592819888
+   ],
+   "eta_hit": [
+    29.666666666666668,
+    0.4714045207910317
+   ],
+   "eta_false": [
+    3.3333333333333335,
+    1.247219128924647
+   ]
+  },
+  "eta_n": 30
+ },
+ "pairs": {
+  "n": 36,
+  "median_h": 1.4603890554290186,
+  "p90_h": 4.207104176616502,
+  "mu": 0.37870287654298207,
+  "sd": 0.825586525003105,
+  "eta_bias": -0.6082223501798745,
+  "eta_sd": 0.5192243515670204,
+  "eta_bias_ci": [
+   -0.8892087556372252,
+   -0.25720693987252824
+  ]
+ },
+ "road_note": "2026-10-31 이동시간 = OSM 도로망 최단경로(OSRM), 자원 호환·가용 제약 포함"
+}

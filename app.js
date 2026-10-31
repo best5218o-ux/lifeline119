@@ -56,7 +56,7 @@ function initOps() {
   loadScenario('S2');
 }
 function loadScenario(key) {
-  S.key = key; S.sc = D.sc[key]; S.step = 0; S.extra = []; S.approved = {}; S.over = {}; $('#scSel').value = key;
+  S.key = key; S.sc = D.sc[key]; LL.setRoad(D.road && D.road.sc && D.road.sc[key]); S.step = 0; S.extra = []; S.approved = {}; S.over = {}; $('#scSel').value = key;
   mapOps.setView(S.sc.center, S.sc.zoom);
   $('#steps').innerHTML = stepsOf(key).map((s, i) => `<button data-i="${i}">${esc(s.label)}</button>`).join('');
   $$('#steps button').forEach(b => b.onclick = () => { S.step = +b.dataset.i; runStep(); });
@@ -529,7 +529,7 @@ function initAbout() {
   <tr><td>한파·폭염</td><td>버티는 시간 ×0.75</td><td>가정</td></tr>
   <tr><td>거치형 산소발생기 배터리</td><td>0시간</td><td>원문 미확인 → 모르면 0</td></tr>
   <tr><td>발표 예정시각 오차</td><td>로그편차 +0.10 ± 0.50</td><td>가정 (부산 2023-05-19: 3시간 → 익일 09시)</td></tr>
-  <tr><td>이동</td><td>직선거리×1.4, 30km/h, 준비 6분, 현장 15분</td><td>가정</td></tr>
+  <tr><td>이동</td><td>OSM 도로망 최단경로 소요시간(OSRM, 신호·혼잡 미반영) + 준비 6분, 현장 15분 · 표에 없는 쌍만 직선거리×1.4÷30km/h</td><td>도로망 실측 · 준비·현장 시간은 가정</td></tr>
   <tr><td>자원</td><td>119안전센터당 이동식발전기 1대</td><td>소방장비 분류 규정 별표3(기본장비). 가구 지원 용량은 미확인</td></tr></table>
   <h2>하지 않는 것</h2><ul><li>진단명이나 등록 순서로 순위를 매기지 않는다 — 남은 시간으로만.</li><li>자동 출동하지 않는다 — 상황요원 「보내기」가 있어야 나간다.</li><li>생성형 AI는 문자 해석 교차확인·문안·이름표 판독에만 쓴다. 순위·배정은 계산 모델이 한다.</li><li>지도와 목록의 가구는 모두 합성이다.</li></ul>
   <h2>출처</h2><ol>${Object.values(LL.SOURCES).map(s => `<li>${esc(s)}</li>`).join('')}</ol>`;
@@ -538,8 +538,8 @@ function initAbout() {
 /* ---------- 시작 ---------- */
 (async function () {
   const [sc, dongs, sites, kep, res] = await Promise.all([j('data/scenarios.json'), j('data/dongs.geojson'), j('data/sites_seogu.json'), j('data/kepco_lifesupport_monthly.json'), j('data/results.json')]);
-  const [gen, heat, wel, part, reg, live] = await Promise.all([j('data/powered_sites_daejeon.json').catch(() => ({ items: [] })), j('data/heat_shelters_seogu.json').catch(() => ({ items: [] })), j('data/welfare_seogu.json').catch(() => ({ dong: {} })), j('data/partners_seogu.json').catch(() => ({ partners: [], hira_vent: [] })), j('data/device_registry.json').catch(() => ({ dev: {} })), j('data/live_summary.json').catch(() => null)]);
-  Object.assign(D, { gen, heat, wel, part, reg, live });
+  const [gen, heat, wel, part, reg, live, road] = await Promise.all([j('data/powered_sites_daejeon.json').catch(() => ({ items: [] })), j('data/heat_shelters_seogu.json').catch(() => ({ items: [] })), j('data/welfare_seogu.json').catch(() => ({ dong: {} })), j('data/partners_seogu.json').catch(() => ({ partners: [], hira_vent: [] })), j('data/device_registry.json').catch(() => ({ dev: {} })), j('data/live_summary.json').catch(() => null), j('data/road_times.json').catch(() => null)]);
+  Object.assign(D, { gen, heat, wel, part, reg, live, road });
   Object.assign(D, { sc, dongs, sites, kep, res });
   // 실데이터 결합: 행안부 「승강기 중대한 고장 발생 내역」(data.go.kr 15048080, 2000-08~2026-07) → K-apt 단지(도로명주소·단지명 일치) → 합성 가구의 단지
   const ef = {}; sites.forEach(x => { const k = x['단지명']; if (k && x['승강기고장_결합'] !== '없음') ef[k] = Math.max(ef[k] || 0, x['승강기중대고장_2021이후'] || 0); });
