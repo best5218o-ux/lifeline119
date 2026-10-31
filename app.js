@@ -143,7 +143,14 @@ function renderStatus(ev, last, count) {
     sub += `${who} 「${p.ai ? highlight(last.n.text, p.ai.spans) : esc(last.n.text.length > 60 ? last.n.text.slice(0, 60) + '…' : last.n.text)}」 → ${p.cause ? '원인 ' + p.cause : '원인 미상'}${p.eta_h != null ? ' · 복구 예정 ' + fmt(p.eta_h) + ' 뒤' : ''}${p.fill ? ' (' + p.fill + ')' : ''}${p.disagree ? ' <b>· AI와 규칙이 달라 확인 필요</b>' : ''}`; }
   else sub += '아직 안내문이 없어 기록으로 복구시간을 잡았습니다';
   sub += ` · 기준 분포: ${pr === LL.REST_PRIOR ? '아파트 정전 382건(단지 내부·모를 때)' : '전국 재난문자 정전 실측 36건(지역 정전)'}`;
-  if (S.nTask) sub += ` · 추천대로 보내면 ${S.nTask}곳 중 <b>${S.P.ok}곳</b>에 배터리가 끝나기 전 도착 (명부 순서대로면 ${S.Pr.ok}곳)`;
+  if (S.nTask) {
+    // 복구 전 배터리가 끝날 것으로 보이는 집(기대치) = Σ P(배터리 < 복구), 배터리 최소 안에 도착한 집은 뺀다
+    const pf = Object.fromEntries(S.A.list.map(a => [a.hh.id, a.p_fail]));
+    const lost = pl => pl.plan.filter(q => !q.ok).reduce((s, q) => s + pf[q.task.id], 0);
+    const all = S.A.list.reduce((s, a) => s + a.p_fail, 0), eA = lost(S.P), eR = lost(S.Pr), f1 = x => x.toFixed(1);
+    sub += ` · 복구 전 배터리가 끝날 집(예측 기대치) <b>${f1(all)}곳 → 추천대로 보내면 ${f1(eA)}곳</b>`;
+    if (Math.abs(eR - eA) >= 0.05) sub += ` (명부 순서대로 보내면 ${f1(eR)}곳)`;
+  }
   $('#stSub').innerHTML = sub;
 }
 const SHORT = f => f.startsWith('배터리 사양') ? ['사양 미확인 → 0으로 계산', 1] : f.startsWith('배터리 상태') ? ['배터리 점검 기록 없음 → 0으로 계산', 1] : f.startsWith('장기') ? ['장기 정전(단지 설비)', 1] : f.startsWith('독거') ? ['혼자 계심', 1] : f === '24시간 상시 사용' ? ['24시간 사용', 0] : f === '기관절개' ? ['기관절개', 0] : /층 —/.test(f) ? [f.split(' —')[0] + ' (승강기)', 0] : null;
@@ -167,6 +174,7 @@ function rowHTML(a, i) {
 function rowsOf(arr, k) { if (arr.length <= k) return arr.map(([a, i]) => rowHTML(a, i)).join(''); return arr.slice(0, k).map(([a, i]) => rowHTML(a, i)).join('') + `<details class="morerows"><summary>${arr.length - k}곳 더 보기</summary>${arr.slice(k).map(([a, i]) => rowHTML(a, i)).join('')}</details>`; }
 function renderQueue() {
   const L3 = [[], [], []]; S.A.list.forEach((a, i) => L3[G[a.tier]].push([a, i]));
+  L3[0].sort((x, y) => x[0].bat_p10 - y[0].bat_p10); L3[1].sort((x, y) => x[0].bat_p10 - y[0].bat_p10); // 화면은 남은 배터리 짧은 순 (배정 순서 EDF와 같음)
   const pend0 = L3[0].filter(([a]) => !S.approved[a.hh.id] && assignOf(a) && assignOf(a).res_name);
   let h = `<div class="grp g0"><div class="grp-h">🔴 ${GNAME[0]} <span class="n">${L3[0].length}곳</span>${pend0.length > 1 ? `<button class="btn sm" id="sendAll">추천대로 모두 보내기 (${pend0.length})</button>` : ''}</div>${L3[0].length ? rowsOf(L3[0], 8) : '<p class="empty">없음</p>'}</div>`;
   h += `<div class="grp g1"><div class="grp-h">🟠 ${GNAME[1]} <span class="n">${L3[1].length}곳</span></div>${L3[1].length ? rowsOf(L3[1], 5) : '<p class="empty">없음</p>'}</div>`;
