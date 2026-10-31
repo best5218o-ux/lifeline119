@@ -206,11 +206,18 @@ function poweredPlaces(hh) {
     if (h && h.km < 6) out.push({ name: h.x.name, km: h.km, why: `정전 범위 밖 무더위쉼터 · ${h.x.dong} · ${h.x.cap}명` }); }
   return out;
 }
+// 이송 후보: 시나리오 병원 + 심평원 의료장비 상세현황(인공호흡기 신고 대수)
+const nk = s => String(s || '').replace(/학교법인|건양교육재단|을지학원|\s/g, '');
+function hospitalsNear(hh) {
+  const V = Object.fromEntries(((D.part && D.part.hira_vent) || []).map(v => [nk(v.name), v.vent]));
+  const L2 = (S.sc.destinations || []).map(d => ({ name: d.name.replace(/^학교법인\s*(건양교육재단|을지학원)\s*/, ''), km: LL.haversineKm(hh, d), vent: V[nk(d.name)] || Object.entries(V).find(([k]) => nk(d.name).includes(k) || k.includes(nk(d.name)))?.[1] || 0 })).sort((a, b) => a.km - b.km);
+  const out = L2.slice(0, 1), v = L2.find(x => x.vent > 0); if (v && v !== out[0]) out.push(v); return out;
+}
 function alternatives(a) {
   const used = new Set(Object.values(S.over).map(o => o.res).concat(S.P.plan.filter(p => p.res && p.task.id !== a.hh.id).map(p => p.res)));
   const all = S.sc.resources.map(r => ({ r, c: LL.compat(r, a.device), arr: LL.DISPATCH.dispatch_delay_h + LL.travelH(r, a.hh) })).sort((x, y) => x.arr - y.arr);
-  const opts = all.filter(o => o.c.ok).slice(0, 5), bad = all.filter(o => !o.c.ok), places = poweredPlaces(a.hh);
-  modal(`<h3>${esc(a.hh.label)} — 다른 방법 고르기</h3><p class="muted">배터리 최소 ${fmt(a.bat_p10)}. ${esc(LL.KIND_KO[a.device.kind])} ${LL.DEVICE_POWER[a.device.kind] ? LL.DEVICE_POWER[a.device.kind].w + 'W(가정)' : ''}에 맞는 자원만 가까운 순으로 보입니다.</p><div class="alt">${opts.map((o, k) => `<button class="btn ghost" data-k="${k}">${ICON(o.r.id)} ${esc(o.r.name)} <small>(${esc(o.c.how)})</small> · ${fmt(o.arr)} 뒤 도착 ${o.arr <= a.bat_p10 ? '— 배터리 전' : '— 배터리보다 늦음'}${used.has(o.r.id) ? ' <small>(다른 집 배정됨)</small>' : ''}</button>`).join('')}<button class="btn ghost" data-k="call">📞 전화 안내 + 🚑 구급 이송으로</button>${places.map((q, k) => `<button class="btn ghost" data-k="p${k}">🏛️ ${esc(q.name)} · ${q.km.toFixed(1)}km <small>(${esc(q.why)})</small></button>`).join('')}</div>${bad.length ? `<p class="muted">후보에서 뺀 자원 ${bad.length}곳: ${bad.slice(0, 6).map(o => esc(o.r.name.replace(/ 이동식발전기| 배터리 차량/, '')) + ' — ' + esc(o.c.why)).join(' · ')}</p>` : ''}`);
+  const opts = all.filter(o => o.c.ok).slice(0, 5), bad = all.filter(o => !o.c.ok), places = poweredPlaces(a.hh), hosp = hospitalsNear(a.hh);
+  modal(`<h3>${esc(a.hh.label)} — 다른 방법 고르기</h3><p class="muted">배터리 최소 ${fmt(a.bat_p10)}. ${esc(LL.KIND_KO[a.device.kind])} ${LL.DEVICE_POWER[a.device.kind] ? LL.DEVICE_POWER[a.device.kind].w + 'W(가정)' : ''}에 맞는 자원만 가까운 순으로 보입니다.</p><div class="alt">${opts.map((o, k) => `<button class="btn ghost" data-k="${k}">${ICON(o.r.id)} ${esc(o.r.name)} <small>(${esc(o.c.how)})</small> · ${fmt(o.arr)} 뒤 도착 ${o.arr <= a.bat_p10 ? '— 배터리 전' : '— 배터리보다 늦음'}${used.has(o.r.id) ? ' <small>(다른 집 배정됨)</small>' : ''}</button>`).join('')}<button class="btn ghost" data-k="call">📞 전화 안내 + 🚑 구급 이송으로</button>${hosp.map(h => `<p class="muted" style="margin:4px 0">🚑 이송 후보: <b>${esc(h.name)}</b> ${h.km.toFixed(1)}km · ${h.vent ? `인공호흡기 ${h.vent}대 신고` : '인공호흡기 신고 내역 없음'} <small>(심평원 의료장비 2025-12)</small></p>`).join('')}${places.map((q, k) => `<button class="btn ghost" data-k="p${k}">🏛️ ${esc(q.name)} · ${q.km.toFixed(1)}km <small>(${esc(q.why)})</small></button>`).join('')}</div>${bad.length ? `<p class="muted">후보에서 뺀 자원 ${bad.length}곳: ${bad.slice(0, 6).map(o => esc(o.r.name.replace(/ 이동식발전기| 배터리 차량/, '')) + ' — ' + esc(o.c.why)).join(' · ')}</p>` : ''}`);
   $$('#mBody [data-k]').forEach(b => b.onclick = () => { const k = b.dataset.k; if (k === 'call') { S.over[a.hh.id] = { lane: 'call' }; } else if (k[0] === 'p') { const q = places[+k.slice(1)]; S.over[a.hh.id] = { lane: 'site', site: q.name, why: q.why }; } else { const o = opts[+k]; S.over[a.hh.id] = { res: o.r.id, res_name: o.r.name, how: o.c.how, arr: o.arr, lane: 'manual', ok: o.arr <= a.bat_p10 }; } closeModal(); renderQueue(); drawMap(); });
 }
 async function showTexts(a) {
@@ -430,6 +437,11 @@ function initPlan() {
   const gu = ['동구', '중구', '서구', '유성구', '대덕구'], months = Object.keys(D.kep['서구']).sort(), cols = ['#64748b', '#0ea5e9', '#c81e33', '#15803d', '#7c3aed'];
   kepChart = new Chart($('#kepChart'), { type: 'line', data: { labels: months, datasets: gu.map((g, i) => ({ label: g, data: months.map(m => D.kep[g][m]), borderColor: cols[i], pointRadius: 0, borderWidth: g === '서구' ? 3 : 1.5 })) }, options: { plugins: { legend: { labels: { boxWidth: 10 } } }, scales: { x: { ticks: { maxTicksLimit: 6 } } }, animation: false } });
   needChart = new Chart($('#needChart'), { type: 'bar', data: { labels: DURS.map(d => d + '시간'), datasets: [{ label: '절반 넘는 확률로 필요', data: need, backgroundColor: '#c81e33' }, { label: '10% 이상 확률로 필요', data: need10, backgroundColor: '#fca5a5' }] }, options: { plugins: { legend: { labels: { boxWidth: 10 } } }, animation: false } });
+  const PK = { '재택의료센터': '🩺', '보건소·지소': '🏥', '장애인 활동지원기관': '🤝' };
+  ((D.part && D.part.partners) || []).forEach(x => L.marker([x.lat, x.lon], { icon: L.divIcon({ className: '', html: `<div style="font-size:14px;line-height:14px">${PK[x.kind] || '•'}</div>` }) }).bindTooltip(`${esc(x.kind)} · <b>${esc(x.name)}</b>${x.tel ? '<br>' + esc(x.tel) : ''}<br><small>${esc(x.addr || '')}</small>`).addTo(mapPlan));
+  (D.gen.items || []).filter(x => x.gu === '서구' || !x.gu).forEach(x => L.marker([x.lat, x.lon], { icon: L.divIcon({ className: '', html: '<div style="font-size:12px;line-height:12px;opacity:.85">🏛️</div>' }) }).bindTooltip(`${esc(x.name)} — 비상발전기 ${x.kw}kW (2020 기준)`).addTo(mapPlan));
+  const cnt = k => ((D.part && D.part.partners) || []).filter(x => x.kind === k).length;
+  const pp = document.getElementById('partnerBox'); if (pp) pp.innerHTML = `<h4 style="margin:12px 0 4px">평시 점검·정전 때 연락할 서구 기관 (지도 표시)</h4><table><tr><th>기관</th><th>곳</th><th>정전 때 할 일</th></tr><tr><td>🩺 재택의료센터</td><td>${cnt('재택의료센터')}</td><td>등록 가구 배터리 점검 방문, 이송 판단 상담</td></tr><tr><td>🏥 보건소·지소</td><td>${cnt('보건소·지소')}</td><td>명부 대조, 충전 거점 후보</td></tr><tr><td>🤝 장애인 활동지원기관</td><td>${cnt('장애인 활동지원기관')}</td><td>현장 연락·계단 이동 지원</td></tr><tr><td>🏛️ 비상발전 공공시설</td><td>${(D.gen.items || []).filter(x => x.gu === '서구').length}</td><td>정전 중 대기·예비 배터리 충전 (협약 필요)</td></tr></table><p class="muted">재택의료센터 주소정보(건보공단 2026-09) · 지역보건의료기관(복지부 2025-12) · 서구 장애인 활동지원 기관(2026-03) · 공공기관 비상용발전기(한국전기안전공사 2020)</p>`;
 }
 
 /* ================= 30초 시연 ================= */
@@ -516,8 +528,8 @@ function initAbout() {
 /* ---------- 시작 ---------- */
 (async function () {
   const [sc, dongs, sites, kep, res] = await Promise.all([j('data/scenarios.json'), j('data/dongs.geojson'), j('data/sites_seogu.json'), j('data/kepco_lifesupport_monthly.json'), j('data/results.json')]);
-  const [gen, heat, wel] = await Promise.all([j('data/powered_sites_daejeon.json').catch(() => ({ items: [] })), j('data/heat_shelters_seogu.json').catch(() => ({ items: [] })), j('data/welfare_seogu.json').catch(() => ({ dong: {} }))]);
-  Object.assign(D, { gen, heat, wel });
+  const [gen, heat, wel, part] = await Promise.all([j('data/powered_sites_daejeon.json').catch(() => ({ items: [] })), j('data/heat_shelters_seogu.json').catch(() => ({ items: [] })), j('data/welfare_seogu.json').catch(() => ({ dong: {} })), j('data/partners_seogu.json').catch(() => ({ partners: [], hira_vent: [] }))]);
+  Object.assign(D, { gen, heat, wel, part });
   Object.assign(D, { sc, dongs, sites, kep, res });
   // 실데이터 결합: 행안부 「승강기 중대한 고장 발생 내역」(data.go.kr 15048080, 2000-08~2026-07) → K-apt 단지(도로명주소·단지명 일치) → 합성 가구의 단지
   const ef = {}; sites.forEach(x => { const k = x['단지명']; if (k && x['승강기고장_결합'] !== '없음') ef[k] = Math.max(ef[k] || 0, x['승강기중대고장_2021이후'] || 0); });
