@@ -162,6 +162,7 @@ function recTxt(a) {
   const g = G[a.tier]; if (g === 2) return '📱 문자로 상황만 안내';
   const p = assignOf(a);
   if (p && p.res_name && (p.lane === 'power' || p.lane === 'manual')) return `${ICON(p.res)} <b>${esc(p.res_name)}</b>${p.how ? ' <small>(' + esc(p.how) + ')</small>' : ''} · <b>${fmt(p.arr)}</b> 뒤 도착`;
+  if (p && p.lane === 'site') return `📞 전화 안내 → 🏛️ <b>${esc(p.site)}</b> — 이동해 예비 배터리 충전·대기 <small>(${esc(p.why)})</small>`;
   if (p && p.res_name && p.lane === 'late') return `📞 먼저 전화로 수동 환기·예비 산소 안내 → ${ICON(p.res)} <b>${esc(p.res_name)}</b> ${fmt(p.arr)} 뒤 (배터리보다 늦음)`;
   return '📞 전화로 수동 환기·예비 산소 안내 → 🚑 구급 이송 판단 (기한 안에 닿는 호환 자원 없음)';
 }
@@ -196,12 +197,21 @@ function sendAll(list) {
   $('#okAll').onclick = () => { list.forEach(a => { S.approved[a.hh.id] = approveTxt(assignOf(a)); }); closeModal(); renderQueue(); drawMap(); };
 }
 function callGuide(a) { S.approved[a.hh.id] = '전화 안내 완료 · 이송 판단 대기'; renderQueue(); showTexts(a); }
+// 정전 중에도 전기가 살아 있는 가까운 곳: 비상발전기 보유 공공시설(한국전기안전공사, 2020 기준) + 정전 범위 밖 무더위쉼터(서구) — 이용은 지자체 협약 필요
+function poweredPlaces(hh) {
+  const out = [], aff = new Set(S.sc.dongs || []);
+  const g = (D.gen.items || []).map(x => ({ x, km: LL.haversineKm(hh, x) })).sort((a, b) => a.km - b.km)[0];
+  if (g && g.km < 6) out.push({ name: g.x.name, km: g.km, why: `비상발전기 ${g.x.kw}kW · 2020 기준 · 이용 협약 필요` });
+  if (aff.size) { const h = (D.heat.items || []).filter(x => !aff.has(x.dong)).map(x => ({ x, km: LL.haversineKm(hh, x) })).sort((a, b) => a.km - b.km)[0];
+    if (h && h.km < 6) out.push({ name: h.x.name, km: h.km, why: `정전 범위 밖 무더위쉼터 · ${h.x.dong} · ${h.x.cap}명` }); }
+  return out;
+}
 function alternatives(a) {
   const used = new Set(Object.values(S.over).map(o => o.res).concat(S.P.plan.filter(p => p.res && p.task.id !== a.hh.id).map(p => p.res)));
   const all = S.sc.resources.map(r => ({ r, c: LL.compat(r, a.device), arr: LL.DISPATCH.dispatch_delay_h + LL.travelH(r, a.hh) })).sort((x, y) => x.arr - y.arr);
-  const opts = all.filter(o => o.c.ok).slice(0, 5), bad = all.filter(o => !o.c.ok);
-  modal(`<h3>${esc(a.hh.label)} — 다른 방법 고르기</h3><p class="muted">배터리 최소 ${fmt(a.bat_p10)}. ${esc(LL.KIND_KO[a.device.kind])} ${LL.DEVICE_POWER[a.device.kind] ? LL.DEVICE_POWER[a.device.kind].w + 'W(가정)' : ''}에 맞는 자원만 가까운 순으로 보입니다.</p><div class="alt">${opts.map((o, k) => `<button class="btn ghost" data-k="${k}">${ICON(o.r.id)} ${esc(o.r.name)} <small>(${esc(o.c.how)})</small> · ${fmt(o.arr)} 뒤 도착 ${o.arr <= a.bat_p10 ? '— 배터리 전' : '— 배터리보다 늦음'}${used.has(o.r.id) ? ' <small>(다른 집 배정됨)</small>' : ''}</button>`).join('')}<button class="btn ghost" data-k="call">📞 전화 안내 + 🚑 구급 이송으로</button></div>${bad.length ? `<p class="muted">후보에서 뺀 자원 ${bad.length}곳: ${bad.slice(0, 6).map(o => esc(o.r.name.replace(/ 이동식발전기| 배터리 차량/, '')) + ' — ' + esc(o.c.why)).join(' · ')}</p>` : ''}`);
-  $$('#mBody [data-k]').forEach(b => b.onclick = () => { const k = b.dataset.k; if (k === 'call') { S.over[a.hh.id] = { lane: 'call' }; } else { const o = opts[+k]; S.over[a.hh.id] = { res: o.r.id, res_name: o.r.name, how: o.c.how, arr: o.arr, lane: 'manual', ok: o.arr <= a.bat_p10 }; } closeModal(); renderQueue(); drawMap(); });
+  const opts = all.filter(o => o.c.ok).slice(0, 5), bad = all.filter(o => !o.c.ok), places = poweredPlaces(a.hh);
+  modal(`<h3>${esc(a.hh.label)} — 다른 방법 고르기</h3><p class="muted">배터리 최소 ${fmt(a.bat_p10)}. ${esc(LL.KIND_KO[a.device.kind])} ${LL.DEVICE_POWER[a.device.kind] ? LL.DEVICE_POWER[a.device.kind].w + 'W(가정)' : ''}에 맞는 자원만 가까운 순으로 보입니다.</p><div class="alt">${opts.map((o, k) => `<button class="btn ghost" data-k="${k}">${ICON(o.r.id)} ${esc(o.r.name)} <small>(${esc(o.c.how)})</small> · ${fmt(o.arr)} 뒤 도착 ${o.arr <= a.bat_p10 ? '— 배터리 전' : '— 배터리보다 늦음'}${used.has(o.r.id) ? ' <small>(다른 집 배정됨)</small>' : ''}</button>`).join('')}<button class="btn ghost" data-k="call">📞 전화 안내 + 🚑 구급 이송으로</button>${places.map((q, k) => `<button class="btn ghost" data-k="p${k}">🏛️ ${esc(q.name)} · ${q.km.toFixed(1)}km <small>(${esc(q.why)})</small></button>`).join('')}</div>${bad.length ? `<p class="muted">후보에서 뺀 자원 ${bad.length}곳: ${bad.slice(0, 6).map(o => esc(o.r.name.replace(/ 이동식발전기| 배터리 차량/, '')) + ' — ' + esc(o.c.why)).join(' · ')}</p>` : ''}`);
+  $$('#mBody [data-k]').forEach(b => b.onclick = () => { const k = b.dataset.k; if (k === 'call') { S.over[a.hh.id] = { lane: 'call' }; } else if (k[0] === 'p') { const q = places[+k.slice(1)]; S.over[a.hh.id] = { lane: 'site', site: q.name, why: q.why }; } else { const o = opts[+k]; S.over[a.hh.id] = { res: o.r.id, res_name: o.r.name, how: o.c.how, arr: o.arr, lane: 'manual', ok: o.arr <= a.bat_p10 }; } closeModal(); renderQueue(); drawMap(); });
 }
 async function showTexts(a) {
   const p = assignOf(a); let order = LL.templateOrder(a, p), msg = LL.templateHousehold(a), src = '규칙 문안';
@@ -219,6 +229,7 @@ function detail(a) {
 }
 function drawResources() {
   for (const r of S.sc.resources) L.marker([r.lat, r.lon], { icon: L.divIcon({ className: '', html: `<div style="width:12px;height:12px;background:${RCOL(r)};opacity:${r.avail === false ? .35 : 1};transform:rotate(45deg);border:2px solid #fff;box-shadow:0 0 2px #0008"></div>` }) }).bindTooltip(esc(r.name) + (r.avail === false ? ' — ' + esc(r.busy || '사용 중') : '') + '<br><small>' + esc(LL.resSpec(r).label) + ' · 출력 ' + LL.resSpec(r).w + 'W(가정)' + (LL.resSpec(r).wh ? ' · ' + LL.resSpec(r).wh + 'Wh' : '') + '<br>' + esc(r.note || '') + '</small>').addTo(layerOps);
+  for (const x of (D.gen && D.gen.items) || []) if ((() => { try { return mapOps.getBounds().pad(0.3).contains([x.lat, x.lon]); } catch (e) { return true; } })()) L.marker([x.lat, x.lon], { icon: L.divIcon({ className: '', html: '<div style="font-size:13px;line-height:13px;opacity:.85">🏛️</div>' }) }).bindTooltip(`${esc(x.name)}<br><small>비상발전기 ${x.kw}kW (한국전기안전공사, 2020 기준) — 정전 중 전기가 살아 있을 수 있는 곳 · 이용 협약 필요</small>`).addTo(layerOps);
   if (S.sc.accident && S.sc.accident.lat) L.marker([S.sc.accident.lat, S.sc.accident.lon], { icon: L.divIcon({ className: '', html: '<div style="font-size:22px;line-height:22px">⚡</div>' }) }).bindTooltip(esc(S.sc.accident.label)).addTo(layerOps);
   if (S.sc.site) L.circle([S.sc.site.lat, S.sc.site.lon], { radius: 450, color: '#0f1b2d', weight: 1, fillOpacity: .05 }).bindTooltip(`${esc(S.sc.site.name)} ${S.sc.site.units}세대 (K-apt)`).addTo(layerOps);
 }
@@ -415,7 +426,7 @@ function initPlan() {
   const kwOf = s => (+s['전기-수전용량'] || 0) / (+s['세대수'] || 1);
   const tot = D.sites.filter(s => s['세대전기계약방식'] === '종합계약' && kwOf(s) > 0);
   const risk = tot.filter(s => s['사용승인일'] && +String(s['사용승인일']).slice(0, 4) <= 2001 && kwOf(s) < 10).sort((a, b) => kwOf(a) - kwOf(b));
-  $('#oldApt').innerHTML = `<p class="muted">단지가 변압기를 직접 운영(세대 종합계약)하고 25년 넘은 단지를, 세대당 수전용량이 작은 순으로. 아파트 정전의 43%가 7~8월, 약 절반이 20년 넘고 세대당 3kW 이하인 단지에서 났습니다(기후에너지환경부 2026-05-20).</p><table><tr><th>단지</th><th>세대</th><th>준공</th><th>세대당 수전</th></tr>` + risk.slice(0, 6).map(s => `<tr><td>${esc(s['단지명'].replace('관리사무소', ''))}</td><td>${s['세대수']}</td><td>${String(s['사용승인일']).slice(0, 4)}</td><td>${kwOf(s).toFixed(1)}</td></tr>`).join('') + `</table><p class="muted">서구 종합계약 ${tot.length}곳 중 25년 넘고 세대당 10 미만 ${risk.length}곳. 수전용량 단위는 K-apt 표기 그대로.</p>`;
+  $('#oldApt').innerHTML = `<p class="muted">단지가 변압기를 직접 운영(세대 종합계약)하고 25년 넘은 단지를, 세대당 수전용량이 작은 순으로. 아파트 정전의 43%가 7~8월, 약 절반이 20년 넘고 세대당 3kW 이하인 단지에서 났습니다(기후에너지환경부 2026-05-20).</p><table><tr><th>단지</th><th>세대</th><th>준공</th><th>세대당 수전</th><th>승강기 중대고장<br><small>2021~</small></th></tr>` + risk.slice(0, 6).map(s => `<tr><td>${esc(s['단지명'].replace('관리사무소', ''))}</td><td>${s['세대수']}</td><td>${String(s['사용승인일']).slice(0, 4)}</td><td>${kwOf(s).toFixed(1)}</td><td>${s['승강기고장_결합'] === '없음' ? '-' : (s['승강기중대고장_2021이후'] || 0) + '건'}</td></tr>`).join('') + `</table><p class="muted">서구 종합계약 ${tot.length}곳 중 25년 넘고 세대당 10 미만 ${risk.length}곳. 수전용량 단위는 K-apt 표기 그대로. 승강기 중대고장은 행안부 공개 내역을 도로명주소·단지명으로 붙인 값(서구 181단지 중 150곳 결합).</p>` + (() => { const el = D.sites.filter(s => (s['최고층수'] || 0) >= 15 && (s['승강기중대고장_2021이후'] || 0) > 0).sort((a, b) => b['승강기중대고장_2021이후'] - a['승강기중대고장_2021이후']); const seen = new Set(), top = el.filter(s => !seen.has(s['단지명']) && seen.add(s['단지명'])).slice(0, 5); return `<h4 style="margin:12px 0 4px">승강기가 자주 멈추는 고층 단지 — 정전 때 이송 계획을 먼저</h4><table><tr><th>단지</th><th>최고층</th><th>승강기</th><th>중대고장 2021~</th></tr>` + top.map(s => `<tr><td>${esc(s['단지명'].replace('관리사무소', ''))}</td><td>${s['최고층수']}층</td><td>${(s['승강기(승객용)'] || 0) + (s['승강기(승객+화물)'] || 0)}대</td><td>${s['승강기중대고장_2021이후']}건</td></tr>`).join('') + `</table><p class="muted">서구 119 구조출동 2025년 「승강기 갇힘」 297건, 7~8월에 가장 많음(소방청 구조활동현황 data.go.kr 15062386). 정전으로 승강기가 서면 고층 의료기기 가구는 장비를 들고 계단으로 내려와야 합니다.</p>`; })();
   const gu = ['동구', '중구', '서구', '유성구', '대덕구'], months = Object.keys(D.kep['서구']).sort(), cols = ['#64748b', '#0ea5e9', '#c81e33', '#15803d', '#7c3aed'];
   kepChart = new Chart($('#kepChart'), { type: 'line', data: { labels: months, datasets: gu.map((g, i) => ({ label: g, data: months.map(m => D.kep[g][m]), borderColor: cols[i], pointRadius: 0, borderWidth: g === '서구' ? 3 : 1.5 })) }, options: { plugins: { legend: { labels: { boxWidth: 10 } } }, scales: { x: { ticks: { maxTicksLimit: 6 } } }, animation: false } });
   needChart = new Chart($('#needChart'), { type: 'bar', data: { labels: DURS.map(d => d + '시간'), datasets: [{ label: '절반 넘는 확률로 필요', data: need, backgroundColor: '#c81e33' }, { label: '10% 이상 확률로 필요', data: need10, backgroundColor: '#fca5a5' }] }, options: { plugins: { legend: { labels: { boxWidth: 10 } } }, animation: false } });
@@ -505,7 +516,12 @@ function initAbout() {
 /* ---------- 시작 ---------- */
 (async function () {
   const [sc, dongs, sites, kep, res] = await Promise.all([j('data/scenarios.json'), j('data/dongs.geojson'), j('data/sites_seogu.json'), j('data/kepco_lifesupport_monthly.json'), j('data/results.json')]);
+  const [gen, heat] = await Promise.all([j('data/powered_sites_daejeon.json').catch(() => ({ items: [] })), j('data/heat_shelters_seogu.json').catch(() => ({ items: [] }))]);
+  Object.assign(D, { gen, heat });
   Object.assign(D, { sc, dongs, sites, kep, res });
+  // 실데이터 결합: 행안부 「승강기 중대한 고장 발생 내역」(data.go.kr 15048080, 2000-08~2026-07) → K-apt 단지(도로명주소·단지명 일치) → 합성 가구의 단지
+  const ef = {}; sites.forEach(x => { const k = x['단지명']; if (k && x['승강기고장_결합'] !== '없음') ef[k] = Math.max(ef[k] || 0, x['승강기중대고장_2021이후'] || 0); });
+  ['S2', 'ALL_DJ'].forEach(k => sc[k] && sc[k].households.forEach(h => { if (ef[h.place] != null) h.elev_faults = ef[h.place]; }));
   initAbout(); initOps(); checkAI(); loadNoticeAI();
   const v = (location.hash || '').slice(1); if (['home', 'plan', 'about'].includes(v)) showView(v);
 })();
