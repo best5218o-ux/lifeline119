@@ -269,7 +269,7 @@ function compat(r, dev) {
   const sp = resSpec(r), need = DEVICE_POWER[dev.kind] || { w: 350, in: 'AC220' };
   if (sp.packs && sp.packs.includes(dev.id)) return { ok: true, how: '전용 외장배터리' };
   if (!sp.out.includes(need.in)) return { ok: false, why: '전압·커넥터 불일치' };
-  if (need.w > sp.w) return { ok: false, why: `출력 부족 ${sp.w}W 〈 ${need.w}W` };
+  if (need.w > sp.w) return { ok: false, why: `출력 부족 (${sp.w}W, 필요 ${need.w}W)` };
   if (sp.wh) { const soc = r.soc == null ? 1 : r.soc, h = sp.wh * soc * 0.85 / need.w; if (h < 1) return { ok: false, why: '잔량 부족' }; return { ok: true, how: `AC ${sp.w}W · 잔량으로 약 ${h.toFixed(0)}시간` }; }
   return { ok: true, how: `AC ${sp.w}W` };
 }
